@@ -48,7 +48,7 @@ info:
     email: hola@tooldata.io
     url: https://www.tooldata.io
   x-logo:
-    url: 'https://www.tooldata.io/favicon.ico'
+    url: 'https://www.tooldata.io/assets/logo.png?v=e0d2f03442'
     altText: Tooldata logo
   license:
     name: Apache 2.0
