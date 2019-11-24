@@ -6,10 +6,10 @@ servers:
     description: Sandbox server
 info:
   description: |
-    This is a sample server Petstore server.
-    You can find out more about Swagger at
-    [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).
-    For this sample, you can use the api key `special-key` to test the authorization filters.
+    Esto es parte de iniciativa para documentar nuestra API para uso de nuestro cliente de forma tal
+    que puedas acceder de una forma más simple, transparente y lo mejor documentada posible, para saber
+    más o adquirir adquirir nuestro servicio solo debes visitar nuestro sitio Web [https://www.tooldata.io](http://www.tooldata.io)
+    o poniendo en contacto nosotros a través de correo [hola@tooldata.io](hola@tooldata.io)
 
     # Introduction
     This API is documented in **OpenAPI format** and is based on
@@ -42,7 +42,7 @@ info:
 
   version: 1.0.0
   title: Tooldata Listener API
-  termsOfService: 'https://www.tooldata.io/terms/'
+  # termsOfService: 'https://www.tooldata.io/terms/'
   contact:
     name: Soporte Tooldata
     email: hola@tooldata.io
