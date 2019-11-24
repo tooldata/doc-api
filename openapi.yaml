@@ -1,8 +1,8 @@
 openapi: 3.0.0
 servers:
-  - url: //petstore.swagger.io/v2
+  - url: //api.tooldata.io/
     description: Default server
-  - url: //petstore.swagger.io/sandbox
+  - url: //test-api.tooldata.io/
     description: Sandbox server
 info:
   description: |
@@ -41,15 +41,15 @@ info:
     <SecurityDefinitions />
 
   version: 1.0.0
-  title: Swagger Petstore
-  termsOfService: 'http://swagger.io/terms/'
+  title: Tooldata Listener API
+  termsOfService: 'https://www.tooldata.io/terms/'
   contact:
-    name: API Support
-    email: apiteam@swagger.io
-    url: https://github.com/Redocly/redoc
+    name: Soporte Tooldata
+    email: hola@tooldata.io
+    url: https://www.tooldata.io
   x-logo:
-    url: 'https://redocly.github.io/redoc/petstore-logo.png'
-    altText: Petstore logo
+    url: 'https://www.tooldata.io/favicon.ico'
+    altText: Tooldata logo
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'

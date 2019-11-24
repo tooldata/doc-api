@@ -1,2 +1,2 @@
 # Documentación del API
-Este proyecto de documentación para el API de Tooldata Listening usando OpenAPI
+Este proyecto de documentación es para el API de Tooldata Listening usando OpenAPI
