@@ -31,11 +31,8 @@ info:
     All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
 
     # Autenticación
-    Petstore offers two forms of authentication:
-      - API Key
-      - OAuth2
-    OAuth2 - an open protocol to allow secure authorization in a simple
-    and standard method from web, mobile and desktop applications.
+    Tooldata Listener API de momento solo ofrece una forma de autenticación y es vía API Key que se crea dentro del panel administrativo de
+    [Tooldata Listeners](https://app.tooldata.io)
 
     <SecurityDefinitions />
 
@@ -932,23 +929,12 @@ components:
       description: List of user object
       required: true
   securitySchemes:
-    petstore_auth:
-      description: |
-        Get access to data while protecting your account credentials.
-        OAuth2 is also a safer and more secure way to give you access.
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: 'http://petstore.swagger.io/api/oauth/dialog'
-          scopes:
-            'write:pets': modify pets in your account
-            'read:pets': read your pets
     api_key:
       description: >
         For this sample, you can use the api key `special-key` to test the
         authorization filters.
       type: apiKey
-      name: api_key
+      name: Authorization
       in: header
   examples:
     Order:
