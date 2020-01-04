@@ -6,38 +6,32 @@ servers:
     description: Sandbox server
 info:
   description: |
-    Esto es parte de iniciativa para documentar nuestra API para uso de nuestro cliente de forma tal
-    que puedas acceder de una forma más simple, transparente y lo mejor documentada posible, para saber
-    más o adquirir adquirir nuestro servicio solo debes visitar nuestro sitio Web [https://www.tooldata.io](http://www.tooldata.io)
-    o poniendo en contacto nosotros a través de correo [hola@tooldata.io](hola@tooldata.io)
+    Tooldata es una empresa, con visión latinoamericana, que desarrolla herramientas para facilitar el acceso y la comprensión 
+    de información desde redes sociales, para contribuir en la toma de decisiones operativas y comunicacionales de sus clientes, 
+    de manera fácil y simple.
+    Nuestro sistema de social listening te ayudará a:
+    * Captar publicaciones de tú interés. 
+    * Analizar esas publicaciones y transformarla en información.
+    * Mostrar la información de forma simple para que puedas tomar mejores decisiones y desarrollar mejores estrategias.
 
     # Introducción
-    This API is documented in **OpenAPI format** and is based on
-    [Petstore sample](http://petstore.swagger.io/) provided by [swagger.io](http://swagger.io) team.
-    It was **extended** to illustrate features of [generator-openapi-repo](https://github.com/Rebilly/generator-openapi-repo)
-    tool and [ReDoc](https://github.com/Redocly/redoc) documentation. In addition to standard
-    OpenAPI syntax we use a few [vendor extensions](https://github.com/Redocly/redoc/blob/master/docs/redoc-vendor-extensions.md).
+    La documentación de nuestra API ayudará a nuestros clientes a llevar los datos a su CRM, herramientas de Business Intelligence 
+    o cualquier sistema de visualización.
 
     # Especificaciones de API
-    This API is documented in **OpenAPI format** and is based on
-    [Petstore sample](http://petstore.swagger.io/) provided by [swagger.io](http://swagger.io) team.
-    It was **extended** to illustrate features of [generator-openapi-repo](https://github.com/Rebilly/generator-openapi-repo)
-    tool and [ReDoc](https://github.com/Redocly/redoc) documentation. In addition to standard
-    OpenAPI syntax we use a few [vendor extensions](https://github.com/Redocly/redoc/blob/master/docs/redoc-vendor-extensions.md).
-
-    # Cross-Origin Resource Sharing
-    This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/).
-    And that allows cross-domain communication from the browser.
-    All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
+    A través de nuestra API podrás:
+    * Consultar los proyectos de monitoreo configurados
+    * Consultar publicaciones de los proyectos de monitoreos
 
     # Autenticación
-    Tooldata Listener API de momento solo ofrece una forma de autenticación y es vía API Key que se crea dentro del panel administrativo de
-    [Tooldata Listeners](https://app.tooldata.io)
+    Para obtener la API Key debes ingesar a nuestro [sistema](https://app.tooldata.io) utilizando un uauario con permisos de Administrador.
+    Para activar la API Key debes ingresar a "Administración -> API Keys-> Nuevo", luego agregar un nombre descriptivo y una o más IPs 
+    que podrán utilizar la API Key.
 
     <SecurityDefinitions />
 
   version: 1.0.0
-  title: Tooldata Listener API
+  title: Tooldata Social Listening API
   # termsOfService: 'https://www.tooldata.io/terms/'
   contact:
     name: Soporte Tooldata
