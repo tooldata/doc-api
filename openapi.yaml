@@ -6,16 +6,16 @@ servers:
     description: Sandbox server
 info:
   description: |
-    Tooldata es una empresa, con visión latinoamericana, que desarrolla herramientas para facilitar el acceso y la comprensión 
-    de información desde redes sociales, para contribuir en la toma de decisiones operativas y comunicacionales de sus clientes, 
+    Tooldata es una empresa, con visión latinoamericana, que desarrolla herramientas para facilitar el acceso y la comprensión
+    de información desde redes sociales, para contribuir en la toma de decisiones operativas y comunicacionales de sus clientes,
     de manera fácil y simple.
     Nuestro sistema de social listening te ayudará a:
-    * Captar publicaciones de tú interés. 
+    * Captar publicaciones de tú interés.
     * Analizar esas publicaciones y transformarla en información.
     * Mostrar la información de forma simple para que puedas tomar mejores decisiones y desarrollar mejores estrategias.
 
     # Introducción
-    La documentación de nuestra API ayudará a nuestros clientes a llevar los datos a su CRM, herramientas de Business Intelligence 
+    La documentación de nuestra API ayudará a nuestros clientes a llevar los datos a su CRM, herramientas de Business Intelligence
     o cualquier sistema de visualización.
 
     # Especificaciones de API
@@ -25,7 +25,7 @@ info:
 
     # Autenticación
     Para obtener la API Key debes ingesar a nuestro [sistema](https://app.tooldata.io) utilizando un uauario con permisos de Administrador.
-    Para activar la API Key debes ingresar a "Administración -> API Keys-> Nuevo", luego agregar un nombre descriptivo y una o más IPs 
+    Para activar la API Key debes ingresar a "Administración -> API Keys-> Nuevo", luego agregar un nombre descriptivo y una o más IPs
     que podrán utilizar la API Key.
 
     <SecurityDefinitions />
@@ -64,7 +64,7 @@ tags:
 x-tagGroups:
   - name: General
     tags:
-      - pet
+      - Colecciones
       - store
   - name: Manejo de usuarios
     tags:
@@ -925,8 +925,8 @@ components:
   securitySchemes:
     api_key:
       description: >
-        For this sample, you can use the api key `special-key` to test the
-        authorization filters.
+        Luego de haber creado y obtenido el `api-key` solo se debe utilizar
+        como parte de autenticación para obtener los datos.
       type: apiKey
       name: Authorization
       in: header
