@@ -47,7 +47,7 @@ info:
 #   url: 'https://github.com/Rebilly/generator-openapi-repo'
 tags:
   - name: collection
-    description: Las "collections" no son más que la unidad de almacenamiento de posts para cada proyecto
+    description: Las colecciones(collections) no son más que la unidad de almacenamiento de posts para cada proyecto
   - name: store
     description: Access to Petstore orders
   - name: collection_model
@@ -69,36 +69,65 @@ x-tagGroups:
       - store_model
 paths:
   /collection:
-    parameters:
-      - name: Accept-Language
-        in: header
-        description: "The language you prefer for messages. Supported values are en-AU, en-CA, en-GB, en-US"
-        example: en-US
-        required: false
-        schema:
-          type: string
-          default: en-AU
-      - name: cookieParam
-        in: cookie
-        description: Some cookie
-        required: true
-        schema:
-          type: integer
-          format: int64
-    post:
+    # parameters:
+      # - name: Accept-Language
+      #   in: header
+      #   description: "The language you prefer for messages. Supported values are en-US, en-CA, en-GB, en-US"
+      #   example: en-US
+      #   required: false
+      #   schema:
+      #     type: string
+      #     default: en-US
+      # - name: cookieParam
+      #   in: cookie
+      #   description: Some cookie
+      #   required: true
+      #   schema:
+      #     type: integer
+      #     format: int64
+    get:
       tags:
-        - pet
-      summary: Add a new pet to the store
-      description: Add new pet to the store inventory.
-      operationId: addPet
+        - collection
+      summary: Obtener las colecciones
+      description: Devuelve una lista las colecciones del usuario
+      operationId: getCollections
+      parameters:
+        - name: petId
+          in: path
+          description: ID of pet to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: petId
+          in: path
+          description: ID of pet to return
+          required: true
+          deprecated: true
+          schema:
+            type: integer
+            format: int64
       responses:
-        '405':
-          description: Invalid input
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
       security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
+        - api_key: []
       x-code-samples:
+        - lang: JS
+          source: |
+            $form = new \PetStore\Entities\Pet();
+            $form->setPetType("Dog");
+            $form->setName("Rex");
+            // set other fields
+            try {
+                $pet = $client->pets()->create($form);
+            } catch (UnprocessableEntityException $e) {
+                var_dump($e->getErrors());
+            }
         - lang: 'C#'
           source: |
             PetStore.v1.Pet pet = new PetStore.v1.Pet();
@@ -129,317 +158,39 @@ paths:
             }
       requestBody:
         $ref: '#/components/requestBodies/Collection'
-    put:
-      tags:
-        - pet
-      summary: Update an existing pet
-      description: ''
-      operationId: updatePet
-      responses:
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Pet not found
-        '405':
-          description: Validation exception
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-      x-code-samples:
-        - lang: PHP
-          source: |
-            $form = new \PetStore\Entities\Pet();
-            $form->setPetId(1);
-            $form->setPetType("Dog");
-            $form->setName("Rex");
-            // set other fields
-            try {
-                $pet = $client->pets()->update($form);
-            } catch (UnprocessableEntityException $e) {
-                var_dump($e->getErrors());
-            }
-      requestBody:
-        $ref: '#/components/requestBodies/Collection'
-  '/collection/{petId}':
-    get:
-      tags:
-        - pet
-      summary: Find pet by ID
-      description: Returns a single pet
-      operationId: getPetById
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet to return
-          required: true
-          deprecated: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Collection'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Collection'
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Pet not found
-      security:
-        - api_key: []
-    post:
-      tags:
-        - pet
-      summary: Updates a pet in the store with form data
-      description: ''
-      operationId: updatePetWithForm
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet that needs to be updated
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '405':
-          description: Invalid input
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                name:
-                  description: Updated name of the pet
-                  type: string
-                status:
-                  description: Updated status of the pet
-                  type: string
-    delete:
-      tags:
-        - pet
-      summary: Deletes a pet
-      description: ''
-      operationId: deletePet
-      parameters:
-        - name: api_key
-          in: header
-          required: false
-          schema:
-            type: string
-          example: "Bearer <TOKEN>"
-        - name: petId
-          in: path
-          description: Pet id to delete
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '400':
-          description: Invalid pet value
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-  '/collection/{petId}/uploadImage':
-    post:
-      tags:
-        - pet
-      summary: uploads an image
-      description: ''
-      operationId: uploadFile
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet to update
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-      requestBody:
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-  /collection/findByStatus:
-    get:
-      tags:
-        - pet
-      summary: Finds Pets by status
-      description: Multiple status values can be provided with comma seperated strings
-      operationId: findPetsByStatus
-      parameters:
-        - name: status
-          in: query
-          description: Status values that need to be considered for filter
-          required: true
-          style: form
-          schema:
-            type: array
-            minItems: 1
-            maxItems: 3
-            items:
-              type: string
-              enum:
-                - available
-                - pending
-                - sold
-              default: available
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schttp://10.70.20.20:8080/hema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Collection'
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Collection'
-        '400':
-          description: Invalid status value
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-  /collection/findByTags:
-    get:
-      tags:
-        - pet
-      summary: Finds Pets by tags
-      description: >-
-        Muliple tags can be provided with comma seperated strings. Use tag1,
-        tag2, tag3 for testing.
-      operationId: findPetsByTags
-      deprecated: true
-      parameters:
-        - name: tags
-          in: query
-          description: Tags to filter by
-          required: true
-          style: form
-          schema:
-            type: array
-            items:
-              type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Collection'
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Collection'
-        '400':
-          description: Invalid tag value
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-  /store/inventory:
+  '/posts/{collectionId}':
     get:
       tags:
         - store
-      summary: Returns pet inventories by status
-      description: Returns a map of status codes to quantities
-      operationId: getInventory
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: integer
-                  format: int32
-      security:
-        - api_key: []
-  /store/order:
-    post:
-      tags:
-        - store
-      summary: Place an order for a pet
-      description: ''
-      operationId: placeOrder
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Order'
-        '400':
-          description: Invalid Order
-          content:
-            application/json:
-              example:
-                status: 400
-                message: "Invalid Order"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-        description: order placed for purchasing the pet
-        required: true
-  '/store/order/{orderId}':
-    get:
-      tags:
-        - store
-      summary: Find purchase order by ID
+      summary: Obtener posts de una colección por ID
       description: >-
         For valid response try integer IDs with value <= 5 or > 10. Other values
         will generated exceptions
       operationId: getOrderById
       parameters:
-        - name: orderId
+        - name: collectionId
           in: path
-          description: ID of pet that needs to be fetched
+          description: El ID para el nuevo
           required: true
           schema:
-            type: integer
-            format: int64
-            minimum: 1
-            maximum: 5
+            type: string
+            format: UUIDv4
+        - name: since
+          in: query
+          description: Fecha de inicio de la consulta
+          required: true
+          schema:
+            type: string
+            format: ISO Date
+        - name: until
+          in: query
+          description: Fecha de inicio de la consulta
+          required: true
+          schema:
+            type: string
+            format: ISO Date
       responses:
-        '200':
+        200:
           description: successful operation
           content:
             application/json:
@@ -448,30 +199,9 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Order'
-        '400':
+        400:
           description: Invalid ID supplied
-        '404':
-          description: Order not found
-    delete:
-      tags:
-        - store
-      summary: Delete purchase order by ID
-      description: >-
-        For valid response try integer IDs with value < 1000. Anything above
-        1000 or nonintegers will generate API errors
-      operationId: deleteOrder
-      parameters:
-        - name: orderId
-          in: path
-          description: ID of the order that needs to be deleted
-          required: true
-          schema:
-            type: string
-            minimum: 1
-      responses:
-        '400':
-          description: Invalid ID supplied
-        '404':
+        404:
           description: Order not found
 components:
   schemas:
@@ -485,57 +215,70 @@ components:
           type: string
         message:
           type: string
-    Cat:
-      description: A representation of a cat
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-    Category:
-      type: object
-      properties:
-        id:
-          description: Category ID
-          allOf:
-            - $ref: '#/components/schemas/Id'
-        name:
-          description: Category name
-          type: string
-          minLength: 1
-        sub:
-          description: Test Sub Category
-          type: object
-          properties:
-            prop1:
-              type: string
-              description: Dumb Property
-      xml:
-        name: Category
-    Dog:
-      description: A representation of a dog
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          properties:
-            packSize:
-              type: integer
-              format: int32
-              description: The size of the pack the dog is from
-              default: 1
-              minimum: 1
-          required:
-            - packSize
-    HoneyBee:
-      description: A representation of a honey bee
-      allOf:
-        - $ref: '#/components/schemas/Collection'
-        - type: object
-          properties:
-            honeyPerDay:
-              type: number
-              description: Average amount of honey produced per day in ounces
-              example: 3.14
-          required:
-            - honeyPerDay
+    # Cat:
+    #   description: A representation of a cat
+    #   allOf:
+    #     - $ref: '#/components/schemas/Collection'
+    #     - type: object
+    # Category:
+    #   type: object
+    #   properties:
+    #     id:
+    #       description: Category ID
+    #       allOf:
+    #         - $ref: '#/components/schemas/Id'
+    #     name:
+    #       description: Category name
+    #       type: string
+    #       minLength: 1
+    #     sub:
+    #       description: Test Sub Category
+    #       type: object
+    #       properties:
+    #         prop1:
+    #           type: string
+    #           description: Dumb Property
+    # Dog:
+    #   description: A representation of a dog
+    #   allOf:
+    #     - $ref: '#/components/schemas/Collection'
+    #     - type: object
+    #       properties:
+    #         packSize:
+    #           type: integer
+    #           format: int32
+    #           description: The size of the pack the dog is from
+    #           default: 1
+    #           minimum: 1
+    #       required:
+    #         - packSize
+    # HoneyBee:
+    #   description: A representation of a honey bee
+    #   allOf:
+    #     - $ref: '#/components/schemas/Collection'
+    #     - type: object
+    #       properties:
+    #         honeyPerDay:
+    #           type: number
+    #           description: Average amount of honey produced per day in ounces
+    #           example: 3.14
+    #       required:
+    #         - honeyPerDay
+    # Twitter:
+    #   description: Publicación proveniente de Twitter
+    #   allOf:
+    #     - $ref: '#/components/schemas/Post'
+    #     - type: object
+    # Instagram:
+    #   description: Publicación proveniente de Instagram
+    #   allOf:
+    #     - $ref: '#/components/schemas/Post'
+    #     - type: object
+    # Facebook:
+    #   description: Publicación proveniente de Facebook
+    #   allOf:
+    #     - $ref: '#/components/schemas/Post'
+    #     - type: object
     Id:
       type: string
       format: UUIDv4
@@ -576,19 +319,10 @@ components:
           description: Unique Request Id
           type: string
           writeOnly: true
-      xml:
-        name: Order
     Collection:
       type: object
       required:
         - name
-        - photoUrls
-      discriminator:
-        propertyName: petType
-        mapping:
-          cat: '#/components/schemas/Cat'
-          dog: '#/components/schemas/Dog'
-          bee: '#/components/schemas/HoneyBee'
       properties:
         id:
           description: Identificador hexadecimal único para cada colección
@@ -613,24 +347,15 @@ components:
           enum:
             - running
             - paused
-      xml:
-        name: Pet
   requestBodies:
     Collection:
       content:
         application/json:
           schema:
             allOf:
+              - title:
               - description: My Pet
-                title: Pettie
               - $ref: '#/components/schemas/Collection'
-        application/xml:
-          schema:
-            type: 'object'
-            properties:
-              name:
-                type: string
-                description: hooray
       description: Pet object that needs to be added to the store
       required: true
   securitySchemes:
