@@ -48,65 +48,33 @@ info:
 tags:
   - name: collection
     description: Las colecciones(collections) no son más que la unidad de almacenamiento de posts para cada proyecto
-  - name: store
-    description: Access to Petstore orders
+  - name: post
+    description: Publicación de las diferentes medios digitales y redes sociales
   - name: collection_model
     x-displayName: Modelos Colecciones
     description: |
       <SchemaDefinition schemaRef="#/components/schemas/Collection" />
-  - name: store_model
-    x-displayName: The Order Model
+  - name: post_model
+    x-displayName: Modelos de publicaciones
     description: |
-      <SchemaDefinition schemaRef="#/components/schemas/Order" exampleRef="#/components/examples/Order" showReadOnly={true} showWriteOnly={true} />
+      <SchemaDefinition schemaRef="#/components/schemas/Post" exampleRef="#/components/examples/Post" showReadOnly={true} showWriteOnly={true} />
 x-tagGroups:
   - name: General
     tags:
       - collection
-      - store
+      - post
   - name: Modelos
     tags:
       - collection_model
-      - store_model
+      - post_model
 paths:
-  /collection:
-    # parameters:
-      # - name: Accept-Language
-      #   in: header
-      #   description: "The language you prefer for messages. Supported values are en-US, en-CA, en-GB, en-US"
-      #   example: en-US
-      #   required: false
-      #   schema:
-      #     type: string
-      #     default: en-US
-      # - name: cookieParam
-      #   in: cookie
-      #   description: Some cookie
-      #   required: true
-      #   schema:
-      #     type: integer
-      #     format: int64
+  /collections:
     get:
       tags:
         - collection
       summary: Obtener las colecciones
       description: Devuelve una lista las colecciones del usuario
       operationId: getCollections
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet to return
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: petId
-          in: path
-          description: ID of pet to return
-          required: true
-          deprecated: true
-          schema:
-            type: integer
-            format: int64
       responses:
         '200':
           description: successful operation
@@ -115,20 +83,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Collection'
       security:
-        - api_key: []
+        - ApiKey: []
       x-code-samples:
-        - lang: JS
+        - lang: Curl
           source: |
-            $form = new \PetStore\Entities\Pet();
-            $form->setPetType("Dog");
-            $form->setName("Rex");
-            // set other fields
-            try {
-                $pet = $client->pets()->create($form);
-            } catch (UnprocessableEntityException $e) {
-                var_dump($e->getErrors());
-            }
-        - lang: 'C#'
+            curl -H 'Accept: application/json' \
+                  -H "Authorization: ApiKey <your api key>" \
+                  https://api.tooldata.io/collections
+        - lang: Python
           source: |
             PetStore.v1.Pet pet = new PetStore.v1.Pet();
             pet.setApiKey("your api key");
@@ -145,6 +107,17 @@ paths:
               // Something wrong -- check response for errors
               Console.WriteLine(response.getRawResponse());
             }
+        - lang: JS
+          source: |
+            $form = new \PetStore\Entities\Pet();
+            $form->setPetType("Dog");
+            $form->setName("Rex");
+            // set other fields
+            try {
+                $pet = $client->pets()->create($form);
+            } catch (UnprocessableEntityException $e) {
+                var_dump($e->getErrors());
+            }
         - lang: PHP
           source: |
             $form = new \PetStore\Entities\Pet();
@@ -156,12 +129,10 @@ paths:
             } catch (UnprocessableEntityException $e) {
                 var_dump($e->getErrors());
             }
-      requestBody:
-        $ref: '#/components/requestBodies/Collection'
   '/posts/{collectionId}':
     get:
       tags:
-        - store
+        - post
       summary: Obtener posts de una colección por ID
       description: >-
         For valid response try integer IDs with value <= 5 or > 10. Other values
@@ -189,32 +160,27 @@ paths:
           schema:
             type: string
             format: ISO Date
+        - name: tags
+          in: query
+          description: Array de etiquetas para filtrar los datos
+          required: false
+          schema:
+            type: array
+      security:
+        - ApiKey: []
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Order'
+                $ref: '#/components/schemas/Post'
         400:
           description: Invalid ID supplied
         404:
           description: Order not found
 components:
   schemas:
-    ApiResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        type:
-          type: string
-        message:
-          type: string
     # Cat:
     #   description: A representation of a cat
     #   allOf:
@@ -283,15 +249,12 @@ components:
       type: string
       format: UUIDv4
       readOnly: true
-    Order:
+    Post:
       type: object
       properties:
         id:
-          description: Order ID
-          allOf:
-            - $ref: '#/components/schemas/Id'
-        petId:
-          description: Pet ID
+          description: ID de la publicación
+          readOnly: true
           allOf:
             - $ref: '#/components/schemas/Id'
         quantity:
@@ -347,28 +310,16 @@ components:
           enum:
             - running
             - paused
-  requestBodies:
-    Collection:
-      content:
-        application/json:
-          schema:
-            allOf:
-              - title:
-              - description: My Pet
-              - $ref: '#/components/schemas/Collection'
-      description: Pet object that needs to be added to the store
-      required: true
   securitySchemes:
-    api_key:
+    ApiKey:
       description: >
-        Luego de haber creado y obtenido el `api-key` solo se debe utilizar
-        como parte de autenticación para obtener los datos. ejemplo:
-        `curl -H 'Accept: application/json' -H "Authorization: Bearer <API_KEY>" https://api.tooldata.io/collections`
+        Luego de haber creado y obtenido el `ApiKey` dentro de la aplicación de **Tooldata**,
+        solo quedaría utilizar para obtener los datos.
       type: apiKey
       name: Authorization
       in: header
   examples:
-    Order:
+    Post:
       value:
         quantity: 1,
         shipDate: 2018-10-19T16:46:45Z,
