@@ -57,7 +57,7 @@ tags:
   - name: post_model
     x-displayName: Modelos de publicaciones
     description: |
-      <SchemaDefinition schemaRef="#/components/schemas/Post" exampleRef="#/components/examples/Post" showReadOnly={true} showWriteOnly={true} />
+      <SchemaDefinition schemaRef="#/components/schemas/Post" />
 x-tagGroups:
   - name: General
     tags:
@@ -135,9 +135,8 @@ paths:
         - post
       summary: Obtener posts de una colección por ID
       description: >-
-        For valid response try integer IDs with value <= 5 or > 10. Other values
-        will generated exceptions
-      operationId: getOrderById
+
+      operationId: getPosts
       parameters:
         - name: collectionId
           in: path
@@ -181,107 +180,177 @@ paths:
           description: Order not found
 components:
   schemas:
-    # Cat:
-    #   description: A representation of a cat
-    #   allOf:
-    #     - $ref: '#/components/schemas/Collection'
-    #     - type: object
-    # Category:
-    #   type: object
-    #   properties:
-    #     id:
-    #       description: Category ID
-    #       allOf:
-    #         - $ref: '#/components/schemas/Id'
-    #     name:
-    #       description: Category name
-    #       type: string
-    #       minLength: 1
-    #     sub:
-    #       description: Test Sub Category
-    #       type: object
-    #       properties:
-    #         prop1:
-    #           type: string
-    #           description: Dumb Property
-    # Dog:
-    #   description: A representation of a dog
-    #   allOf:
-    #     - $ref: '#/components/schemas/Collection'
-    #     - type: object
-    #       properties:
-    #         packSize:
-    #           type: integer
-    #           format: int32
-    #           description: The size of the pack the dog is from
-    #           default: 1
-    #           minimum: 1
-    #       required:
-    #         - packSize
-    # HoneyBee:
-    #   description: A representation of a honey bee
-    #   allOf:
-    #     - $ref: '#/components/schemas/Collection'
-    #     - type: object
-    #       properties:
-    #         honeyPerDay:
-    #           type: number
-    #           description: Average amount of honey produced per day in ounces
-    #           example: 3.14
-    #       required:
-    #         - honeyPerDay
-    # Twitter:
-    #   description: Publicación proveniente de Twitter
-    #   allOf:
-    #     - $ref: '#/components/schemas/Post'
-    #     - type: object
-    # Instagram:
-    #   description: Publicación proveniente de Instagram
-    #   allOf:
-    #     - $ref: '#/components/schemas/Post'
-    #     - type: object
-    # Facebook:
-    #   description: Publicación proveniente de Facebook
-    #   allOf:
-    #     - $ref: '#/components/schemas/Post'
-    #     - type: object
+    Twitter:
+      description: Publicación proveniente de Twitter
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            retweets:
+              type: integer
+              description: Cantidad de retweets de la publicación
+              example: 20
+    Instagram:
+      description: Publicación proveniente de Instagram
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+    Facebook:
+      description: Publicación proveniente de Facebook
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            title:
+              type: string
+              description: Título de publicación
+              example: "This title Facebook Post"
+            type:
+              type: string
+              description: Tipo de publicación
+              enum:
+                - video
+                - link
+                - foto
+            reactions:
+              type: object
+              description: Cantidad totalizada y desglosada de las reacciones de la publicación
+              properties:
+                total:
+                  type: integer
+                  description: Cantidad de total de reacciones
+                  example: 35
+                love:
+                  type: integer
+                  example: 8
+                wow:
+                  type: integer
+                  example: 10
+                haha:
+                  type: integer
+                  example: 12
+                sad:
+                  type: integer
+                  example: 10
+                angry:
+                  type: integer
+                  example: 5
     Id:
       type: string
       format: UUIDv4
       readOnly: true
-    Post:
+    Place:
       type: object
       properties:
         id:
+          type: string
+          example: "442419559"
+        name:
+          type: string
+          example: "Indonesia"
+    Date:
+      type: string
+      example: 2017-12-25T19:20:47.064Z
+    User:
+      type: object
+      properties:
+        id_str:
+          type: string
+          description: ID del usuario heredado de fuente del dato
+          example: "442419559_442419559"
+        name:
+          type: string
+          description: Nombre declarado por el usuario como "Nombre real"
+          example: "Kambing Jantan 🐐"
+        username:
+          type: string
+          description: Nombre de usuario para dicha fuente de datos(Medio digital o red social)
+          example: ramablackhunter
+        picture:
+          type: string
+          description: URL del avatar del usuario
+          example: https://pbs.twimg.com/profile_images/1187193584547614720/UexmIfCm.jpg
+        followers:
+          type: integer
+          description: cantidad de seguidores
+          example: 160
+        type_user:
+          type: string
+          description: Tipo de usuario o de que medio digital proviene
+          enum:
+            - twitter
+            - facebook
+            - instagram
+        gender:
+          type: string
+          enum:
+            - female
+            - male
+            - bussiness
+            - other
+        place:
+          description: Lugar declarado por el usuario
+          allOf:
+            - $ref: '#/components/schemas/Place'
+    Post:
+      type: object
+      discriminator:
+          propertyName: type_post
+          mapping:
+            twitter: '#/components/schemas/Twitter'
+            instagram: '#/components/schemas/Instagram'
+            facebook: '#/components/schemas/Facebook'
+      properties:
+        id_str:
+          type: string
           description: ID de la publicación
           readOnly: true
+        user:
+          description: Usuario autor de la publicación
           allOf:
-            - $ref: '#/components/schemas/Id'
-        quantity:
+            - $ref: '#/components/schemas/User'
+        full_text:
+          type: string
+          description: Texto completo de la publicación de los datos
+          example: "kan lu sering minem buat mainan lu, 😅"
+        likes:
           type: integer
-          format: int32
-          minimum: 1
-          default: 1
-        shipDate:
-          description: Estimated ship date
+          description: Cantidad de "Me Gusta"
+          example: 12
+        shared:
+          type: integer
+          description: Cantidad de veces que dicha publicación ha sido compartida
+          example: 20
+        comments:
+          type: integer
+          description: Cantidad de comentarios
+          example: 5
+        link:
           type: string
-          format: date-time
-        status:
+          description: Link a la publicación original
+          example: https://twitter.com/ramablackhunter/status/1187583984269578240
+        image:
           type: string
-          description: Order Status
+          description: URL de la imagen, si la publicación contiene alguna
+          example: https://scontent-iad3-1.cdninstagram.com/vp/2ee818c845b90a133d3ef55faaf05f9a/5D832EB2/t51.2885-15/e35/60606690_1861913407243904_3084166615872296555_n.jpg?_nc_ht=scontent-iad3-1.cdninstagram.com
+        sentiment:
+          type: string
+          description: Sentimiento de la publicación
           enum:
-            - placed
-            - approved
-            - delivered
-        complete:
-          description: Indicates whenever order was completed or not
-          type: boolean
-          default: false
-          readOnly: true
-        rqeuestId:
-          description: Unique Request Id
+            - positive
+            - neutral
+            - negative
+        type_post:
           type: string
-          writeOnly: true
+          description: Fuente de la publicación
+        place:
+          description: Lugar declarado por el usuario
+          allOf:
+            - $ref: '#/components/schemas/Place'
+        created_at:
+          description: Fecha de creación de la publicación en formato ISO
+          allOf:
+            - $ref: '#/components/schemas/Date'
     Collection:
       type: object
       required:
@@ -298,15 +367,15 @@ components:
           example: Publicaciones de Twitter
         created_at:
           description: Fecha de creación de la colección en formato ISO
-          type: string
-          example: 2017-12-25T19:20:47.064Z
+          allOf:
+            - $ref: '#/components/schemas/Date'
         updated_at:
           description: Fecha de la última actualización de la colección en formato ISO
-          type: string
-          example: 2017-12-25T19:20:47.064Z
+          allOf:
+            - $ref: '#/components/schemas/Date'
         status:
           type: string
-          description: Pet status in the store
+          description: Estado actual del proyecto
           enum:
             - running
             - paused
@@ -318,10 +387,4 @@ components:
       type: apiKey
       name: Authorization
       in: header
-  examples:
-    Post:
-      value:
-        quantity: 1,
-        shipDate: 2018-10-19T16:46:45Z,
-        status: placed,
-        complete: false
+
