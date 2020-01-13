@@ -2,8 +2,8 @@ openapi: 3.0.0
 servers:
   - url: //api.tooldata.io/
     description: Default server
-  - url: //test-api.tooldata.io/
-    description: Sandbox server
+  # - url: //test-api.tooldata.io/
+  #   description: Sandbox server
 info:
   version: 1.0.0
   title: Tooldata Social Listening API
@@ -76,12 +76,25 @@ paths:
       description: Devuelve una lista las colecciones del usuario
       operationId: getCollections
       responses:
-        '200':
-          description: successful operation
+        200:
+          description: Operación éxitosa
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collection'
+        401:
+          description: IP no permitida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        403:
+          description: API Key no válida o requerida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+
       security:
         - ApiKey: []
       x-code-samples:
@@ -90,6 +103,105 @@ paths:
             curl -H 'Accept: application/json' \
                   -H "Authorization: ApiKey <your api key>" \
                   https://api.tooldata.io/collections
+
+        - lang: Python
+          source: |
+            from requests import get
+
+            API_URL = 'https://api.tooldata.io';
+            ACCESS_TOKEN = '<your api key>';
+            HEADERS = {
+              'Content-type': 'application/json',
+              'Authorization': 'ApiKey %s' % ACCESS_TOKEN
+            }
+
+            result = get('%s/collections' % API_URL, headers=HEADERS)
+            print(result.json())
+
+        - lang: JS
+          source: |
+            const API_URL = 'https://api.tooldata.io/';
+            const ACCESS_TOKEN = '<your api key>';
+
+            request({
+              url: `${API_URL}/collections`,
+              method: 'GET',
+              headers: {
+                'Content-type': 'application/json',
+                'Authorization': 'ApiKey ' + ACCESS_TOKEN
+              },
+              callback: (error, response, body) => {
+                if (error) return console.log(error);
+
+                console.log(JSON.parse(body));
+              }
+            });
+
+        - lang: PHP
+          source: |
+            DEFINE('API_URL', 'https://api.tooldata.io/');
+            DEFINE('API_KEY', '<your api key>');
+
+            $header = array();
+            $header[] = 'Content-type: application/json';
+            $header[] = 'Authorization: ApiKey ' . API_KEY;
+
+            $curl = curl_init();
+            $url = sprintf("%s/collections", API_URL);
+
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+
+            print_r(json_decode($result, true));
+
+  '/collections/{collectionId}/posts':
+    get:
+      tags:
+        - post
+      summary: Obtener posts de una colección por ID
+      description: >-
+
+      operationId: getPosts
+      parameters:
+        - name: collectionId
+          in: path
+          description: El ID para el nuevo
+          required: true
+          schema:
+            type: string
+            format: UUIDv4
+        - name: since
+          in: query
+          description: Fecha de inicio de la consulta
+          required: true
+          schema:
+            type: string
+            format: ISO Date
+        - name: until
+          in: query
+          description: Fecha de inicio de la consulta
+          required: true
+          schema:
+            type: string
+            format: ISO Date
+        - name: tags
+          in: query
+          description: Array de etiquetas para filtrar los datos
+          required: false
+          schema:
+            type: array
+      security:
+        - ApiKey: []
+      x-code-samples:
+        - lang: Curl
+          source: |
+            curl -H 'Accept: application/json' \
+                  -H "Authorization: ApiKey <your api key>" \
+                  https://api.tooldata.io/collections/<idCollection>/posts
         - lang: Python
           source: |
             PetStore.v1.Pet pet = new PetStore.v1.Pet();
@@ -129,44 +241,6 @@ paths:
             } catch (UnprocessableEntityException $e) {
                 var_dump($e->getErrors());
             }
-  '/posts/{collectionId}':
-    get:
-      tags:
-        - post
-      summary: Obtener posts de una colección por ID
-      description: >-
-
-      operationId: getPosts
-      parameters:
-        - name: collectionId
-          in: path
-          description: El ID para el nuevo
-          required: true
-          schema:
-            type: string
-            format: UUIDv4
-        - name: since
-          in: query
-          description: Fecha de inicio de la consulta
-          required: true
-          schema:
-            type: string
-            format: ISO Date
-        - name: until
-          in: query
-          description: Fecha de inicio de la consulta
-          required: true
-          schema:
-            type: string
-            format: ISO Date
-        - name: tags
-          in: query
-          description: Array de etiquetas para filtrar los datos
-          required: false
-          schema:
-            type: array
-      security:
-        - ApiKey: []
       responses:
         200:
           description: successful operation
@@ -177,7 +251,7 @@ paths:
         400:
           description: Invalid ID supplied
         404:
-          description: Order not found
+          description: Collection not found
 components:
   schemas:
     Twitter:
@@ -188,13 +262,22 @@ components:
           properties:
             retweets:
               type: integer
-              description: Cantidad de retweets de la publicación
+              description: Cantidad de retweets del tweet
               example: 20
+            replies:
+              type: integer
+              description: Cantidad de replies del tweet
+              example: 14
     Instagram:
       description: Publicación proveniente de Instagram
       allOf:
         - $ref: '#/components/schemas/Post'
         - type: object
+          properties:
+            comments:
+              type: integer
+              description: Cantidad de comentarios
+              example: 12
     Facebook:
       description: Publicación proveniente de Facebook
       allOf:
@@ -239,15 +322,6 @@ components:
       type: string
       format: UUIDv4
       readOnly: true
-    Place:
-      type: object
-      properties:
-        id:
-          type: string
-          example: "442419559"
-        name:
-          type: string
-          example: "Indonesia"
     Date:
       type: string
       example: 2017-12-25T19:20:47.064Z
@@ -288,10 +362,9 @@ components:
             - male
             - bussiness
             - other
-        place:
+        location:
+          type: string
           description: Lugar declarado por el usuario
-          allOf:
-            - $ref: '#/components/schemas/Place'
     Post:
       type: object
       discriminator:
@@ -309,7 +382,7 @@ components:
           description: Usuario autor de la publicación
           allOf:
             - $ref: '#/components/schemas/User'
-        full_text:
+        text:
           type: string
           description: Texto completo de la publicación de los datos
           example: "kan lu sering minem buat mainan lu, 😅"
@@ -331,8 +404,8 @@ components:
           example: https://twitter.com/ramablackhunter/status/1187583984269578240
         image:
           type: string
-          description: URL de la imagen, si la publicación contiene alguna
-          example: https://scontent-iad3-1.cdninstagram.com/vp/2ee818c845b90a133d3ef55faaf05f9a/5D832EB2/t51.2885-15/e35/60606690_1861913407243904_3084166615872296555_n.jpg?_nc_ht=scontent-iad3-1.cdninstagram.com
+          description: Imagen o imágenes de la publicación o vista previa de contener un vídeo
+          example: https://instagram.flim2-1.fna.fbcdn.net/v/t51.2885-15/e35/81324234_475987726626426_8306335761980630333_n.jpg?_nc_ht=instagram.flim2-1.fna.fbcdn.net&_nc_cat=106&_nc_ohc=EiGL9f-dMskAX96KefV&oh=64535ae9ce7691386c47b13d1f2430f4&oe=5ED7C73D
         sentiment:
           type: string
           description: Sentimiento de la publicación
@@ -343,14 +416,17 @@ components:
         type_post:
           type: string
           description: Fuente de la publicación
-        place:
+        location:
+          type: string
           description: Lugar declarado por el usuario
-          allOf:
-            - $ref: '#/components/schemas/Place'
         created_at:
           description: Fecha de creación de la publicación en formato ISO
           allOf:
             - $ref: '#/components/schemas/Date'
+        tags:
+          type: array
+          description: Array de etiquetas
+          example: ['VIP', 'Alerta']
     Collection:
       type: object
       required:
@@ -387,4 +463,3 @@ components:
       type: apiKey
       name: Authorization
       in: header
-
