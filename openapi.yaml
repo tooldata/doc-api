@@ -84,16 +84,8 @@ paths:
                 $ref: '#/components/schemas/Collection'
         401:
           description: IP no permitida
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Collection'
         403:
           description: API Key no válida o requerida
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Collection'
 
       security:
         - ApiKey: []
@@ -204,56 +196,233 @@ paths:
                   https://api.tooldata.io/collections/<idCollection>/posts
         - lang: Python
           source: |
-            PetStore.v1.Pet pet = new PetStore.v1.Pet();
-            pet.setApiKey("your api key");
-            pet.petType = PetStore.v1.Pet.TYPE_DOG;
-            pet.name = "Rex";
-            // set other fields
-            PetStoreResponse response = pet.create();
-            if (response.statusCode == HttpStatusCode.Created)
-            {
-              // Successfully created
+            from requests import get
+
+            API_URL = 'https://api.tooldata.io'
+            ACCESS_TOKEN = '<your api key>'
+            COLLECTION_ID = '<idCollection>'
+
+            HEADERS = {
+              'Content-type': 'application/json',
+              'Authorization': 'ApiKey %s' % ACCESS_TOKEN
             }
-            else
-            {
-              // Something wrong -- check response for errors
-              Console.WriteLine(response.getRawResponse());
-            }
+
+            since='2019-10-02T02:57:26.957Z'
+            until='2019-12-09T22:17:54.987Z'
+            url = '%s/collections/%s/posts?since=%s&until=%s' % (API_URL, COLLECTION_ID, since, until)
+
+            result = get(url, headers=HEADERS)
+            print(result.json())
+
         - lang: JS
           source: |
-            $form = new \PetStore\Entities\Pet();
-            $form->setPetType("Dog");
-            $form->setName("Rex");
-            // set other fields
-            try {
-                $pet = $client->pets()->create($form);
-            } catch (UnprocessableEntityException $e) {
-                var_dump($e->getErrors());
+            const request = require('request');
+
+            const API_URL = 'https://api.tooldata.io/';
+            const ACCESS_TOKEN = '<your api key>';
+
+
+            const idCollection = '<idCollection>'
+            const query = {
+              since: '2019-10-02T02:57:26.957Z',
+              until: '2019-12-09T22:17:54.987Z'
             }
+
+            request({
+              url: `${API_URL}/collections/${idCollection}/posts`,
+              method: 'GET',
+              qs: query,
+              headers: {
+                'Content-type': 'application/json',
+                'Authorization': 'ApiKey ' + ACCESS_TOKEN
+              },
+              callback: (error, response, body) => {
+                if (error) return console.log(error);
+
+                console.log(JSON.parse(body));
+              }
+            });
         - lang: PHP
           source: |
-            $form = new \PetStore\Entities\Pet();
-            $form->setPetType("Dog");
-            $form->setName("Rex");
-            // set other fields
-            try {
-                $pet = $client->pets()->create($form);
-            } catch (UnprocessableEntityException $e) {
-                var_dump($e->getErrors());
-            }
+            DEFINE('API_URL', 'https://api.tooldata.io/');
+            DEFINE('API_KEY', '<your api key>');
+
+            $id_collection = '<idCollection>';
+            $header = array();
+            $header[] = 'Content-type: application/json';
+            $header[] = 'Authorization: ApiKey ' . API_KEY;
+
+            $curl = curl_init();
+            $since = '2019-11-02T02:57:26.957Z';
+            $until = '2019-12-09T22:17:54.987Z';
+            $url = sprintf("%s/collections/%s/posts?since=%s&until=%s", API_URL, $id_collection, $since, $until);
+
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+
+            print_r(json_decode($result, true));
       responses:
         200:
-          description: successful operation
+          description: Operación éxitosa
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Post'
-        400:
-          description: Invalid ID supplied
+        401:
+          description: IP no permitida
+        403:
+          description: API Key no válida o requerida
         404:
-          description: Collection not found
+          description: Colección no encontrada
 components:
   schemas:
+    Id:
+      type: string
+      format: UUIDv4
+      readOnly: true
+    Date:
+      type: string
+      example: 2017-12-25T19:20:47.064Z
+    Tags:
+        type: array
+        description: Array de etiquetas
+        example: ['VIP', 'Alerta']
+    User:
+      type: object
+      properties:
+        id_str:
+          type: string
+          description: ID del usuario heredado de fuente del dato
+          example: "442419559_442419559"
+        name:
+          type: string
+          description: Nombre declarado por el usuario como "Nombre real"
+          example: "Kambing Jantan 🐐"
+        username:
+          type: string
+          description: Nombre de usuario para dicha fuente de datos(Medio digital o red social)
+          example: ramablackhunter
+        picture:
+          type: string
+          description: URL del avatar del usuario
+          example: https://pbs.twimg.com/profile_images/1187193584547614720/UexmIfCm.jpg
+        followers:
+          type: integer
+          description: cantidad de seguidores
+          example: 160
+        type_user:
+          type: string
+          description: Tipo de usuario o de que medio digital proviene
+          enum:
+            - twitter
+            - facebook
+            - instagram
+        gender:
+          type: string
+          enum:
+            - female
+            - male
+            - bussiness
+            - other
+        location:
+          type: string
+          description: Lugar declarado por el usuario
+    Collection:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          description: Identificador hexadecimal único para cada colección
+          example: d3447be04dbb48e5fa522852a835e18e
+          allOf:
+            - $ref: '#/components/schemas/Id'
+        name:
+          description: The name given to a pet
+          type: string
+          example: Publicaciones de Twitter
+        tags:
+          allOf:
+            - $ref: '#/components/schemas/Tags'
+        status:
+          type: string
+          description: Estado actual del proyecto
+          enum:
+            - running
+            - paused
+        created_at:
+          description: Fecha de creación de la colección en formato ISO
+          allOf:
+            - $ref: '#/components/schemas/Date'
+        updated_at:
+          description: Fecha de la última actualización de la colección en formato ISO
+          allOf:
+            - $ref: '#/components/schemas/Date'
+    Post:
+      type: object
+      discriminator:
+          propertyName: type_post
+          mapping:
+            twitter: '#/components/schemas/Twitter'
+            instagram: '#/components/schemas/Instagram'
+            facebook: '#/components/schemas/Facebook'
+      properties:
+        id_str:
+          type: string
+          description: ID de la publicación
+          readOnly: true
+        user:
+          description: Usuario autor de la publicación
+          allOf:
+            - $ref: '#/components/schemas/User'
+        text:
+          type: string
+          description: Texto completo de la publicación de los datos
+          example: "kan lu sering minem buat mainan lu, 😅"
+        likes:
+          type: integer
+          description: Cantidad de "Me Gusta"
+          example: 12
+        shared:
+          type: integer
+          description: Cantidad de veces que dicha publicación ha sido compartida
+          example: 20
+        comments:
+          type: integer
+          description: Cantidad de comentarios
+          example: 5
+        link:
+          type: string
+          description: Link a la publicación original
+          example: https://twitter.com/ramablackhunter/status/1187583984269578240
+        image:
+          type: string
+          description: Imagen o imágenes de la publicación o vista previa de contener un vídeo
+          example: https://instagram.flim2-1.fna.fbcdn.net/v/t51.2885-15/e35/81324234_475987726626426_8306335761980630333_n.jpg?_nc_ht=instagram.flim2-1.fna.fbcdn.net&_nc_cat=106&_nc_ohc=EiGL9f-dMskAX96KefV&oh=64535ae9ce7691386c47b13d1f2430f4&oe=5ED7C73D
+        sentiment:
+          type: string
+          description: Sentimiento de la publicación
+          enum:
+            - positive
+            - neutral
+            - negative
+        type_post:
+          type: string
+          description: Fuente de la publicación
+        location:
+          type: string
+          description: Lugar declarado por el usuario
+        created_at:
+          description: Fecha de creación de la publicación en formato ISO
+          allOf:
+            - $ref: '#/components/schemas/Date'
+        tags:
+          allOf:
+            - $ref: '#/components/schemas/Tags'
     Twitter:
       description: Publicación proveniente de Twitter
       allOf:
@@ -318,143 +487,6 @@ components:
                 angry:
                   type: integer
                   example: 5
-    Id:
-      type: string
-      format: UUIDv4
-      readOnly: true
-    Date:
-      type: string
-      example: 2017-12-25T19:20:47.064Z
-    User:
-      type: object
-      properties:
-        id_str:
-          type: string
-          description: ID del usuario heredado de fuente del dato
-          example: "442419559_442419559"
-        name:
-          type: string
-          description: Nombre declarado por el usuario como "Nombre real"
-          example: "Kambing Jantan 🐐"
-        username:
-          type: string
-          description: Nombre de usuario para dicha fuente de datos(Medio digital o red social)
-          example: ramablackhunter
-        picture:
-          type: string
-          description: URL del avatar del usuario
-          example: https://pbs.twimg.com/profile_images/1187193584547614720/UexmIfCm.jpg
-        followers:
-          type: integer
-          description: cantidad de seguidores
-          example: 160
-        type_user:
-          type: string
-          description: Tipo de usuario o de que medio digital proviene
-          enum:
-            - twitter
-            - facebook
-            - instagram
-        gender:
-          type: string
-          enum:
-            - female
-            - male
-            - bussiness
-            - other
-        location:
-          type: string
-          description: Lugar declarado por el usuario
-    Post:
-      type: object
-      discriminator:
-          propertyName: type_post
-          mapping:
-            twitter: '#/components/schemas/Twitter'
-            instagram: '#/components/schemas/Instagram'
-            facebook: '#/components/schemas/Facebook'
-      properties:
-        id_str:
-          type: string
-          description: ID de la publicación
-          readOnly: true
-        user:
-          description: Usuario autor de la publicación
-          allOf:
-            - $ref: '#/components/schemas/User'
-        text:
-          type: string
-          description: Texto completo de la publicación de los datos
-          example: "kan lu sering minem buat mainan lu, 😅"
-        likes:
-          type: integer
-          description: Cantidad de "Me Gusta"
-          example: 12
-        shared:
-          type: integer
-          description: Cantidad de veces que dicha publicación ha sido compartida
-          example: 20
-        comments:
-          type: integer
-          description: Cantidad de comentarios
-          example: 5
-        link:
-          type: string
-          description: Link a la publicación original
-          example: https://twitter.com/ramablackhunter/status/1187583984269578240
-        image:
-          type: string
-          description: Imagen o imágenes de la publicación o vista previa de contener un vídeo
-          example: https://instagram.flim2-1.fna.fbcdn.net/v/t51.2885-15/e35/81324234_475987726626426_8306335761980630333_n.jpg?_nc_ht=instagram.flim2-1.fna.fbcdn.net&_nc_cat=106&_nc_ohc=EiGL9f-dMskAX96KefV&oh=64535ae9ce7691386c47b13d1f2430f4&oe=5ED7C73D
-        sentiment:
-          type: string
-          description: Sentimiento de la publicación
-          enum:
-            - positive
-            - neutral
-            - negative
-        type_post:
-          type: string
-          description: Fuente de la publicación
-        location:
-          type: string
-          description: Lugar declarado por el usuario
-        created_at:
-          description: Fecha de creación de la publicación en formato ISO
-          allOf:
-            - $ref: '#/components/schemas/Date'
-        tags:
-          type: array
-          description: Array de etiquetas
-          example: ['VIP', 'Alerta']
-    Collection:
-      type: object
-      required:
-        - name
-      properties:
-        id:
-          description: Identificador hexadecimal único para cada colección
-          example: d3447be04dbb48e5fa522852a835e18e
-          allOf:
-            - $ref: '#/components/schemas/Id'
-        name:
-          description: The name given to a pet
-          type: string
-          example: Publicaciones de Twitter
-        created_at:
-          description: Fecha de creación de la colección en formato ISO
-          allOf:
-            - $ref: '#/components/schemas/Date'
-        updated_at:
-          description: Fecha de la última actualización de la colección en formato ISO
-          allOf:
-            - $ref: '#/components/schemas/Date'
-        status:
-          type: string
-          description: Estado actual del proyecto
-          enum:
-            - running
-            - paused
   securitySchemes:
     ApiKey:
       description: >
