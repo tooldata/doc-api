@@ -180,9 +180,9 @@ paths:
           schema:
             type: string
             format: ISO Date
-        - name: tags
+        - name: tags[]
           in: query
-          description: Array de etiquetas para filtrar los datos
+          description: Etiquetas para filtrar los datos, este campo debe repetirse por cada etiqueta
           required: false
           schema:
             type: array
