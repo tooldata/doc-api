@@ -291,6 +291,38 @@ components:
         type: array
         description: Array de etiquetas
         example: ['VIP', 'Alerta']
+    Phrases:
+        type: array
+        description: Array de frases de valor dentro del texto
+        example: ['pulso electromagnético', 'prodcuto interno bruto']
+    Organizations:
+        type: array
+        description: Array de organizaciones, empresas, entidades o personas importantes mencionadas dentro del texto
+        example: ['OMS', 'ONU', 'Congreso de la Républica', 'Greenpeace']
+    Persons:
+        type: array
+        description: Array de personas importantes mencionadas dentro del texto
+        example: ['Presidente JFK', 'Mahatma Gandhi', 'Salvador Dalí']
+    Locations:
+        type: array
+        description: Array de ubicaciones mencionadas dentro del texto
+        example: ['Bogotá, Colombia', 'Valparaiso', 'Perú, Lima']
+    Commercial Items:
+        type: array
+        description: Array de productos comerciales mencionados dentro del texto
+        example: ['PS5', 'iPhone', 'Freidora de Aire', 'Peluche Abracitos']
+    Events:
+        type: array
+        description: Array de eventos mencionados dentro del texto
+        example: ['Lollapalooza', 'Super Bowl']
+    Dates:
+        type: array
+        description: Array de fechas mencionadas dentro del texto
+        example: ['Hace par de semanas', 'próximo fin de semana', 'noviembre de 1984', '12/10/2012']
+    Quantitys:
+        type: array
+        description: Array cantidades mencionadas dentro del texto
+        example: ['10%', '65 lucas', 'veinte mil hectareas', 'demasiados articulos']
     User:
       type: object
       properties:
@@ -331,6 +363,7 @@ components:
         location:
           type: string
           description: Lugar declarado por el usuario
+          example: "Valaparaiso, Chile"
     Collection:
       type: object
       required:
@@ -367,14 +400,16 @@ components:
       discriminator:
           propertyName: type_post
           mapping:
-            twitter: '#/components/schemas/Twitter'
-            instagram: '#/components/schemas/Instagram'
-            facebook: '#/components/schemas/Facebook'
+            Twitter: '#/components/schemas/Twitter'
+            Facebook: '#/components/schemas/Facebook'
+            Instagram: '#/components/schemas/Instagram'
+            Medios Digitales: '#/components/schemas/News'
       properties:
         id_str:
           type: string
           description: ID de la publicación
           readOnly: true
+          example: '156484985298'
         user:
           description: Usuario autor de la publicación
           allOf:
@@ -395,6 +430,13 @@ components:
           type: integer
           description: Cantidad de comentarios
           example: 5
+        score:
+          type: number
+          description: Basado en la cantidad de interacciones y el número de seguidores se le da un nivel de importancia o impacto a la publicación
+          example: 1205.52
+        engagement:
+          type: number
+          example: 12.7
         link:
           type: string
           description: Link a la publicación original
@@ -416,6 +458,7 @@ components:
         location:
           type: string
           description: Lugar declarado por el usuario
+          example: "Lima, Perú"
         created_at:
           description: Fecha de creación de la publicación en formato ISO
           allOf:
@@ -423,6 +466,27 @@ components:
         tags:
           allOf:
             - $ref: '#/components/schemas/Tags'
+        organizations:
+          allOf:
+            - $ref: '#/components/schemas/Organizations'
+        persons:
+          allOf:
+            - $ref: '#/components/schemas/Persons'
+        locations:
+          allOf:
+            - $ref: '#/components/schemas/Locations'
+        commercial_items:
+          allOf:
+            - $ref: '#/components/schemas/Commercial Items'
+        events:
+          allOf:
+            - $ref: '#/components/schemas/Events'
+        dates:
+          allOf:
+            - $ref: '#/components/schemas/Dates'
+        quantitys:
+          allOf:
+            - $ref: '#/components/schemas/Quantitys'
     Twitter:
       description: Publicación proveniente de Twitter
       allOf:
@@ -435,8 +499,12 @@ components:
               example: 20
             replies:
               type: integer
-              description: Cantidad de replies del tweet
+              description: Cantidad de respuestas del tweet
               example: 14
+            quoutes:
+              type: integer
+              description: Cantidad de veces que ha sido citado el tweet
+              example: 22
     Instagram:
       description: Publicación proveniente de Instagram
       allOf:
@@ -447,6 +515,16 @@ components:
               type: integer
               description: Cantidad de comentarios
               example: 12
+    News:
+      description: Publicaciones proveniente de Medios Digitales}
+      allOf:
+        - type: object
+          properties:
+            title:
+              type: string
+              description: Título de publicación
+              example: "This title for news"
+        - $ref: '#/components/schemas/Post'
     Facebook:
       description: Publicación proveniente de Facebook
       allOf:
