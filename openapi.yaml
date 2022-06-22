@@ -55,7 +55,7 @@ tags:
     description: |
       <SchemaDefinition schemaRef="#/components/schemas/Collection" />
   - name: post_model
-    x-displayName: Modelos de publicaciones
+    x-displayName: Modelos de Publicaciones
     description: |
       <SchemaDefinition schemaRef="#/components/schemas/Post" />
 x-tagGroups:
@@ -180,6 +180,18 @@ paths:
           schema:
             type: string
             format: ISO Date
+        - name: page
+          in: query
+          description: Página de actual de los datos
+          required: false
+          schema:
+            type: int
+        - name: limit
+          in: query
+          description: Etiquetas para filtrar los datos, este campo debe repetirse por cada etiqueta
+          required: false
+          schema:
+            type: int
         - name: tags[]
           in: query
           description: Etiquetas para filtrar los datos, este campo debe repetirse por cada etiqueta
@@ -194,6 +206,7 @@ paths:
             curl -H 'Accept: application/json' \
                   -H "Authorization: ApiKey <your api key>" \
                   https://api.tooldata.io/collections/<idCollection>/posts
+
         - lang: Python
           source: |
             from requests import get
@@ -242,6 +255,7 @@ paths:
                 console.log(JSON.parse(body));
               }
             });
+
         - lang: PHP
           source: |
             DEFINE('API_URL', 'https://api.tooldata.io/');
@@ -265,21 +279,46 @@ paths:
             curl_close($curl);
 
             print_r(json_decode($result, true));
+
       responses:
         200:
           description: Operación éxitosa
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Post'
+                $ref: '#/components/schemas/response'
         401:
           description: IP no permitida
         403:
           description: API Key no válida o requerida
         404:
           description: Colección no encontrada
+
 components:
   schemas:
+    response:
+      type: object
+      properties:
+        mentions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        limit:
+          type: integer
+          description: Cantidad máxima de menciones por página
+          example: 500
+        page:
+          type: integer
+          description: Página actual
+          example: 1
+        pages:
+          type: integer
+          description: Cantidad totales de páginas
+          example: 10
+        total:
+          type: integer
+          description: Total de menciones
+          example: 5000
     Id:
       type: string
       format: UUIDv4
