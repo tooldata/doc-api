@@ -188,7 +188,7 @@ paths:
             type: int
         - name: limit
           in: query
-          description: Etiquetas para filtrar los datos, este campo debe repetirse por cada etiqueta
+          description: Cantidad máxima de menciones por página (Por defecto 500 menciones por página máximo)
           required: false
           minimum: 1
           maximum: 500
@@ -308,7 +308,7 @@ components:
             $ref: '#/components/schemas/Post'
         limit:
           type: integer
-          description: Cantidad máxima de menciones por página (Por defecto 500 menciones por página máximo)
+          description: Cantidad máxima de menciones por página
           example: 500
         page:
           type: integer
