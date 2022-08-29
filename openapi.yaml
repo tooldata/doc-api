@@ -497,6 +497,7 @@ components:
         type_post:
           type: string
           description: Fuente de la publicación
+          example: 'twitter'
         location:
           type: string
           description: Lugar declarado por el usuario
