@@ -1,12 +1,11 @@
 services:
   redoc:
     container_name: doc-api-redoc
-    image: redocly/redoc:latest
+    image: redocly/redoc:v2.5.0
     environment:
       - PAGE_TITLE=Tooldata API
       - PAGE_FAVICON=https://app.tooldata.io/favicon.ico
-      - SPEC_URL=/openapi.yaml
-      - PORT=3000
+      - SPEC_URL=https://raw.githubusercontent.com/tooldata/doc-api/master/openapi.yaml
     restart: unless-stopped
 
   nginx:
