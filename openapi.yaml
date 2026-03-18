@@ -1,19 +1,20 @@
-openapi: 3.0.0
+openapi: 3.0.3
 servers:
-  - url: //api.tooldata.io/
-    description: Default server
-  # - url: //test-api.tooldata.io/
-  #   description: Sandbox server
+  - url: https://api.tooldata.io
+    description: Producción
+  # - url: https://test-api.tooldata.io
+  #   description: Sandbox
 info:
-  version: 1.0.0
+  version: 2.0.0
   title: Tooldata Social Listening API
   description: |
     Tooldata es una empresa, con visión latinoamericana, que desarrolla herramientas para facilitar el acceso y la comprensión
     de información desde redes sociales, para contribuir en la toma de decisiones operativas y comunicacionales de sus clientes,
     de manera fácil y simple.
+
     Nuestro sistema de social listening te ayudará a:
-    * Captar publicaciones de tú interés.
-    * Analizar esas publicaciones y transformarla en información.
+    * Captar publicaciones de tu interés.
+    * Analizar esas publicaciones y transformarlas en información.
     * Mostrar la información de forma simple para que puedas tomar mejores decisiones y desarrollar mejores estrategias.
 
     # Introducción
@@ -22,16 +23,35 @@ info:
 
     # Especificaciones de API
     A través de nuestra API podrás:
-    * Consultar los proyectos de monitoreo configurados
-    * Consultar publicaciones de los proyectos de monitoreos
+    * Consultar los proyectos de monitoreo configurados (colecciones)
+    * Consultar publicaciones de los proyectos de monitoreo
+    * Consultar las palabras más frecuentes de un proyecto (nube de palabras)
 
     # Autenticación
-    Para obtener la API Key debes ingesar a nuestro [sistema](https://app.tooldata.io) utilizando un uauario con permisos de Administrador.
-    Para activar la API Key debes ingresar a "Administración -> API Keys-> Nuevo", luego agregar un nombre descriptivo y una o más IPs
+    Para obtener la API Key debes ingresar a nuestro [sistema](https://app.tooldata.io) utilizando un usuario con permisos de Administrador.
+    Para activar la API Key debes ingresar a **Administración > API Keys > Nuevo**, luego agregar un nombre descriptivo y una o más IPs
     que podrán utilizar la API Key.
 
+    La API Key debe enviarse en cada solicitud mediante uno de los siguientes métodos:
+
+    | Método | Formato |
+    |--------|---------|
+    | Header `Authorization` | `ApiKey <tu_api_key>` |
+    | Header `x-access-token` | `<tu_api_key>` |
+    | Query param | `?ApiKey=<tu_api_key>` |
+
+    # Fechas
+    Todas las fechas deben enviarse y se devuelven en formato **ISO 8601 UTC** (ejemplo: `2025-11-01T00:00:00.000Z`).
+
+    # Paginación
+    Los endpoints que devuelven listas paginadas incluyen metadatos de paginación en la respuesta.
+    Por defecto se retornan **500 registros** por página, con un máximo de **1000**.
+
+    # Filtros
+    Los endpoints de posts y palabras soportan filtros opcionales por plataforma, sentimiento y género.
+    Los valores se envían como strings separados por comas (ejemplo: `type=twitter,instagram`).
+
     <SecurityDefinitions />
-  # termsOfService: 'https://www.tooldata.io/terms/'
   contact:
     name: Soporte Tooldata
     email: hola@tooldata.io
@@ -39,109 +59,124 @@ info:
   x-logo:
     url: 'https://www.tooldata.io/assets/logo.png?v=e0d2f03442'
     altText: Tooldata logo
-  # license:
-  #   name: Apache 2.0
-  #   url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-# externalDocs:
-#   description: Find out how to create Github repo for your OpenAPI spec.
-#   url: 'https://github.com/Rebilly/generator-openapi-repo'
 tags:
   - name: collection
-    description: Las colecciones(collections) no son más que la unidad de almacenamiento de posts para cada proyecto
+    description: |
+      Las colecciones representan los proyectos de monitoreo configurados.
+      Cada colección almacena publicaciones de múltiples plataformas digitales y redes sociales.
   - name: post
-    description: Publicación de las diferentes medios digitales y redes sociales
+    description: Publicaciones capturadas desde diferentes medios digitales y redes sociales.
+  - name: word
+    description: Palabras más frecuentes extraídas de las publicaciones de una colección.
   - name: collection_model
-    x-displayName: Modelos Colecciones
+    x-displayName: Modelo Colección
     description: |
       <SchemaDefinition schemaRef="#/components/schemas/Collection" />
   - name: post_model
-    x-displayName: Modelos de Publicaciones
+    x-displayName: Modelo Publicación
     description: |
       <SchemaDefinition schemaRef="#/components/schemas/Post" />
+  - name: word_model
+    x-displayName: Modelo Palabra
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/Word" />
 x-tagGroups:
-  - name: General
+  - name: Endpoints
     tags:
       - collection
       - post
+      - word
   - name: Modelos
     tags:
       - collection_model
       - post_model
+      - word_model
+
 paths:
   /collections:
     get:
       tags:
         - collection
       summary: Obtener las colecciones
-      description: Devuelve una lista las colecciones del usuario
+      description: Devuelve la lista de colecciones (proyectos de monitoreo) del cliente autenticado.
       operationId: getCollections
       responses:
-        200:
-          description: Operación éxitosa
+        '200':
+          description: Operación exitosa
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Collection'
-        401:
-          description: IP no permitida
-        403:
-          description: API Key no válida o requerida
-
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collection'
+              example:
+                - id: "d3447be04dbb48e5fa522852a835e18e"
+                  name: "Banco de Chile"
+                  tags: ["VIP", "Teletón", "Luksic"]
+                  status: "running"
+                  created_at: "2022-04-13T16:23:23.367Z"
+                  updated_at: "2025-12-18T15:37:40.498Z"
+                - id: "7ff89295ffce47e0849ba359793c1dc9"
+                  name: "Aeromético"
+                  tags: ["Influencers", "Emergencias"]
+                  status: "paused"
+                  created_at: "2022-06-21T22:35:44.295Z"
+                  updated_at: "2025-12-18T15:37:40.498Z"
+        '401':
+          $ref: '#/components/responses/IpNotAllowed'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
       security:
         - ApiKey: []
       x-code-samples:
-        - lang: Curl
+        - lang: cURL
           source: |
             curl -H 'Accept: application/json' \
-                  -H "Authorization: ApiKey <your api key>" \
+                  -H "Authorization: ApiKey <tu_api_key>" \
                   https://api.tooldata.io/collections
 
         - lang: Python
           source: |
-            from requests import get
+            import requests
 
-            API_URL = 'https://api.tooldata.io';
-            ACCESS_TOKEN = '<your api key>';
+            API_URL = 'https://api.tooldata.io'
+            API_KEY = '<tu_api_key>'
             HEADERS = {
-              'Content-type': 'application/json',
-              'Authorization': 'ApiKey %s' % ACCESS_TOKEN
+                'Content-type': 'application/json',
+                'Authorization': f'ApiKey {API_KEY}'
             }
 
-            result = get('%s/collections' % API_URL, headers=HEADERS)
-            print(result.json())
+            response = requests.get(f'{API_URL}/collections', headers=HEADERS)
+            print(response.json())
 
-        - lang: JS
+        - lang: JavaScript
           source: |
-            const API_URL = 'https://api.tooldata.io/';
-            const ACCESS_TOKEN = '<your api key>';
+            const API_URL = 'https://api.tooldata.io';
+            const API_KEY = '<tu_api_key>';
 
-            request({
-              url: `${API_URL}/collections`,
-              method: 'GET',
+            const response = await fetch(`${API_URL}/collections`, {
               headers: {
                 'Content-type': 'application/json',
-                'Authorization': 'ApiKey ' + ACCESS_TOKEN
-              },
-              callback: (error, response, body) => {
-                if (error) return console.log(error);
-
-                console.log(JSON.parse(body));
+                'Authorization': `ApiKey ${API_KEY}`
               }
             });
+            const data = await response.json();
+            console.log(data);
 
         - lang: PHP
           source: |
-            DEFINE('API_URL', 'https://api.tooldata.io/');
-            DEFINE('API_KEY', '<your api key>');
+            define('API_URL', 'https://api.tooldata.io');
+            define('API_KEY', '<tu_api_key>');
 
-            $header = array();
-            $header[] = 'Content-type: application/json';
-            $header[] = 'Authorization: ApiKey ' . API_KEY;
+            $header = [
+                'Content-type: application/json',
+                'Authorization: ApiKey ' . API_KEY
+            ];
 
             $curl = curl_init();
-            $url = sprintf("%s/collections", API_URL);
-
-            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_URL, API_URL . '/collections');
             curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 
@@ -154,125 +189,203 @@ paths:
     get:
       tags:
         - post
-      summary: Obtener posts de una colección por ID
-      description: >-
+      summary: Obtener posts de una colección
+      description: |
+        Devuelve las publicaciones paginadas de una colección, con filtros opcionales por fecha, plataforma,
+        sentimiento, género, etiquetas y ordenamiento.
 
+        Las fechas `since` y `until` son **obligatorias** y deben estar en formato ISO 8601 UTC.
       operationId: getPosts
       parameters:
         - name: collectionId
           in: path
-          description: El ID para el nuevo
+          description: ID de la colección (hexadecimal de 32 caracteres)
           required: true
           schema:
             type: string
-            format: UUIDv4
+            example: "1c8ef41de1744e5bb00d198b727555e7"
         - name: since
           in: query
-          description: Fecha de inicio de la consulta
+          description: Fecha de inicio de la consulta (ISO 8601 UTC)
           required: true
           schema:
             type: string
-            format: ISO Date
+            format: date-time
+            example: "2025-11-01T00:00:00.000Z"
         - name: until
           in: query
-          description: Fecha de inicio de la consulta
+          description: Fecha de fin de la consulta (ISO 8601 UTC)
           required: true
           schema:
             type: string
-            format: ISO Date
+            format: date-time
+            example: "2025-11-30T23:59:59.999Z"
         - name: page
           in: query
-          description: Página de actual de los datos
+          description: Número de página (por defecto 1)
           required: false
           schema:
-            type: int
+            type: integer
+            minimum: 1
+            default: 1
         - name: limit
           in: query
-          description: Cantidad máxima de menciones por página (Por defecto 500 menciones por página máximo)
+          description: Cantidad máxima de publicaciones por página (por defecto 500, máximo 1000)
           required: false
-          minimum: 1
-          maximum: 500
-          multipleOf: 1
           schema:
-            type: int
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 500
+        - name: type
+          in: query
+          description: |
+            Filtrar por plataforma. Valores separados por coma.
+            Valores permitidos: `twitter`, `instagram`, `instagram_comment`, `facebook`, `facebook_comment`,
+            `news`, `tiktok`, `tiktok_comment`, `linkedin`, `youtube`, `youtube_comment`, `spotify`
+          required: false
+          schema:
+            type: string
+            example: "twitter,instagram"
+        - name: sentiment
+          in: query
+          description: |
+            Filtrar por sentimiento. Valores separados por coma.
+            Valores permitidos: `positive`, `neutral`, `negative`
+          required: false
+          schema:
+            type: string
+            example: "positive,negative"
+        - name: gender
+          in: query
+          description: |
+            Filtrar por género del autor. Valores separados por coma.
+            Valores permitidos: `male`, `female`, `business`, `other`
+          required: false
+          schema:
+            type: string
+            example: "male,female"
+        - name: order
+          in: query
+          description: |
+            Campo de ordenamiento. Prefijo `-` para orden descendente.
+            Campos permitidos: `created_at`, `likes_count`, `retweets_count`, `replies_count`,
+            `score`, `engagement`, `total_interactions_count`, `play_count`
+          required: false
+          schema:
+            type: string
+            default: "-created_at"
+            example: "-score"
         - name: tags[]
           in: query
-          description: Etiquetas para filtrar los datos, este campo debe repetirse por cada etiqueta
+          description: |
+            Filtrar por etiquetas. Repetir el parámetro por cada etiqueta.
+            Ejemplo: `tags[]=VIP&tags[]=Teletón`
           required: false
           schema:
             type: array
+            items:
+              type: string
       security:
         - ApiKey: []
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostsResponse'
+        '401':
+          $ref: '#/components/responses/IpNotAllowed'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CollectionNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
       x-code-samples:
-        - lang: Curl
+        - lang: cURL
           source: |
             curl -H 'Accept: application/json' \
-                  -H "Authorization: ApiKey <your api key>" \
-                  https://api.tooldata.io/collections/<idCollection>/posts
+                  -H "Authorization: ApiKey <tu_api_key>" \
+                  "https://api.tooldata.io/collections/<collectionId>/posts?since=2025-11-01T00:00:00.000Z&until=2025-11-30T23:59:59.999Z&limit=100&page=1"
 
         - lang: Python
           source: |
-            from requests import get
+            import requests
 
             API_URL = 'https://api.tooldata.io'
-            ACCESS_TOKEN = '<your api key>'
-            COLLECTION_ID = '<idCollection>'
-
+            API_KEY = '<tu_api_key>'
+            COLLECTION_ID = '<collectionId>'
             HEADERS = {
-              'Content-type': 'application/json',
-              'Authorization': 'ApiKey %s' % ACCESS_TOKEN
-            }
-
-            since='2019-10-02T02:57:26.957Z'
-            until='2019-12-09T22:17:54.987Z'
-            url = '%s/collections/%s/posts?since=%s&until=%s' % (API_URL, COLLECTION_ID, since, until)
-
-            result = get(url, headers=HEADERS)
-            print(result.json())
-
-        - lang: JS
-          source: |
-            const request = require('request');
-
-            const API_URL = 'https://api.tooldata.io/';
-            const ACCESS_TOKEN = '<your api key>';
-
-
-            const idCollection = '<idCollection>'
-            const query = {
-              since: '2019-10-02T02:57:26.957Z',
-              until: '2019-12-09T22:17:54.987Z'
-            }
-
-            request({
-              url: `${API_URL}/collections/${idCollection}/posts`,
-              method: 'GET',
-              qs: query,
-              headers: {
                 'Content-type': 'application/json',
-                'Authorization': 'ApiKey ' + ACCESS_TOKEN
-              },
-              callback: (error, response, body) => {
-                if (error) return console.log(error);
+                'Authorization': f'ApiKey {API_KEY}'
+            }
 
-                console.log(JSON.parse(body));
-              }
+            params = {
+                'since': '2025-11-01T00:00:00.000Z',
+                'until': '2025-11-30T23:59:59.999Z',
+                'limit': 100,
+                'page': 1,
+                'type': 'twitter',
+                'sentiment': 'positive,negative'
+            }
+
+            url = f'{API_URL}/collections/{COLLECTION_ID}/posts'
+            response = requests.get(url, headers=HEADERS, params=params)
+            data = response.json()
+
+            print(f"Total: {data['totalDocs']} publicaciones")
+            print(f"Página {data['page']} de {data['totalPages']}")
+            for post in data['mentions']:
+                print(f"  [{post['type_post']}] {post['text'][:80]}...")
+
+        - lang: JavaScript
+          source: |
+            const API_URL = 'https://api.tooldata.io';
+            const API_KEY = '<tu_api_key>';
+            const COLLECTION_ID = '<collectionId>';
+
+            const params = new URLSearchParams({
+              since: '2025-11-01T00:00:00.000Z',
+              until: '2025-11-30T23:59:59.999Z',
+              limit: '100',
+              page: '1'
             });
+
+            const response = await fetch(
+              `${API_URL}/collections/${COLLECTION_ID}/posts?${params}`,
+              {
+                headers: {
+                  'Content-type': 'application/json',
+                  'Authorization': `ApiKey ${API_KEY}`
+                }
+              }
+            );
+            const data = await response.json();
+            console.log(`Total: ${data.totalDocs} publicaciones`);
+            console.log(`Página ${data.page} de ${data.totalPages}`);
 
         - lang: PHP
           source: |
-            DEFINE('API_URL', 'https://api.tooldata.io/');
-            DEFINE('API_KEY', '<your api key>');
+            define('API_URL', 'https://api.tooldata.io');
+            define('API_KEY', '<tu_api_key>');
 
-            $id_collection = '<idCollection>';
-            $header = array();
-            $header[] = 'Content-type: application/json';
-            $header[] = 'Authorization: ApiKey ' . API_KEY;
+            $collectionId = '<collectionId>';
+            $header = [
+                'Content-type: application/json',
+                'Authorization: ApiKey ' . API_KEY
+            ];
+
+            $params = http_build_query([
+                'since' => '2025-11-01T00:00:00.000Z',
+                'until' => '2025-11-30T23:59:59.999Z',
+                'limit' => 100,
+                'page' => 1
+            ]);
 
             $curl = curl_init();
-            $since = '2019-11-02T02:57:26.957Z';
-            $until = '2019-12-09T22:17:54.987Z';
-            $url = sprintf("%s/collections/%s/posts?since=%s&until=%s", API_URL, $id_collection, $since, $until);
+            $url = sprintf("%s/collections/%s/posts?%s", API_URL, $collectionId, $params);
 
             curl_setopt($curl, CURLOPT_URL, $url);
             curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
@@ -281,275 +394,407 @@ paths:
             $result = curl_exec($curl);
             curl_close($curl);
 
-            print_r(json_decode($result, true));
+            $data = json_decode($result, true);
+            echo "Total: " . $data['totalDocs'] . " publicaciones\n";
 
+  '/collections/{collectionId}/words':
+    get:
+      tags:
+        - word
+      summary: Obtener nube de palabras de una colección
+      description: |
+        Devuelve las palabras más frecuentes encontradas en las publicaciones de una colección,
+        con filtros opcionales por fecha, plataforma, sentimiento y género.
+
+        Retorna un máximo de **40 palabras**, ordenadas por frecuencia descendente.
+      operationId: getWords
+      parameters:
+        - name: collectionId
+          in: path
+          description: ID de la colección (hexadecimal de 32 caracteres)
+          required: true
+          schema:
+            type: string
+            example: "1c8ef41de1744e5bb00d198b727555e7"
+        - name: since
+          in: query
+          description: Fecha de inicio de la consulta (ISO 8601 UTC)
+          required: true
+          schema:
+            type: string
+            format: date-time
+            example: "2025-11-01T00:00:00.000Z"
+        - name: until
+          in: query
+          description: Fecha de fin de la consulta (ISO 8601 UTC)
+          required: true
+          schema:
+            type: string
+            format: date-time
+            example: "2025-11-30T23:59:59.999Z"
+        - name: type
+          in: query
+          description: |
+            Filtrar por plataforma. Valores separados por coma.
+            Valores permitidos: `twitter`, `instagram`, `instagram_comment`, `facebook`, `facebook_comment`,
+            `news`, `tiktok`, `tiktok_comment`, `linkedin`, `youtube`, `youtube_comment`, `spotify`
+          required: false
+          schema:
+            type: string
+            example: "twitter"
+        - name: sentiment
+          in: query
+          description: |
+            Filtrar por sentimiento. Valores separados por coma.
+            Valores permitidos: `positive`, `neutral`, `negative`
+          required: false
+          schema:
+            type: string
+        - name: gender
+          in: query
+          description: |
+            Filtrar por género del autor. Valores separados por coma.
+            Valores permitidos: `male`, `female`, `business`, `other`
+          required: false
+          schema:
+            type: string
+      security:
+        - ApiKey: []
       responses:
-        200:
-          description: Operación éxitosa
+        '200':
+          description: Operación exitosa
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/response'
-        401:
-          description: IP no permitida
-        403:
-          description: API Key no válida o requerida
-        404:
-          description: Colección no encontrada
+                $ref: '#/components/schemas/WordsResponse'
+              example:
+                words:
+                  - text: "banco"
+                    count: 2363
+                  - text: "chile"
+                    count: 2097
+                  - text: "teleton"
+                    count: 1040
+                total: 5419
+        '401':
+          $ref: '#/components/responses/IpNotAllowed'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/CollectionNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H 'Accept: application/json' \
+                  -H "Authorization: ApiKey <tu_api_key>" \
+                  "https://api.tooldata.io/collections/<collectionId>/words?since=2025-11-01T00:00:00.000Z&until=2025-11-30T23:59:59.999Z"
+
+        - lang: Python
+          source: |
+            import requests
+
+            API_URL = 'https://api.tooldata.io'
+            API_KEY = '<tu_api_key>'
+            COLLECTION_ID = '<collectionId>'
+            HEADERS = {
+                'Content-type': 'application/json',
+                'Authorization': f'ApiKey {API_KEY}'
+            }
+
+            params = {
+                'since': '2025-11-01T00:00:00.000Z',
+                'until': '2025-11-30T23:59:59.999Z'
+            }
+
+            url = f'{API_URL}/collections/{COLLECTION_ID}/words'
+            response = requests.get(url, headers=HEADERS, params=params)
+            data = response.json()
+
+            print(f"Total publicaciones analizadas: {data['total']}")
+            for word in data['words']:
+                print(f"  {word['text']}: {word['count']}")
+
+        - lang: JavaScript
+          source: |
+            const API_URL = 'https://api.tooldata.io';
+            const API_KEY = '<tu_api_key>';
+            const COLLECTION_ID = '<collectionId>';
+
+            const params = new URLSearchParams({
+              since: '2025-11-01T00:00:00.000Z',
+              until: '2025-11-30T23:59:59.999Z'
+            });
+
+            const response = await fetch(
+              `${API_URL}/collections/${COLLECTION_ID}/words?${params}`,
+              {
+                headers: {
+                  'Content-type': 'application/json',
+                  'Authorization': `ApiKey ${API_KEY}`
+                }
+              }
+            );
+            const data = await response.json();
+            console.log(`Total publicaciones: ${data.total}`);
+            data.words.forEach(w => console.log(`  ${w.text}: ${w.count}`));
+
+        - lang: PHP
+          source: |
+            define('API_URL', 'https://api.tooldata.io');
+            define('API_KEY', '<tu_api_key>');
+
+            $collectionId = '<collectionId>';
+            $header = [
+                'Content-type: application/json',
+                'Authorization: ApiKey ' . API_KEY
+            ];
+
+            $params = http_build_query([
+                'since' => '2025-11-01T00:00:00.000Z',
+                'until' => '2025-11-30T23:59:59.999Z'
+            ]);
+
+            $curl = curl_init();
+            $url = sprintf("%s/collections/%s/words?%s", API_URL, $collectionId, $params);
+
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+
+            $data = json_decode($result, true);
+            echo "Total publicaciones: " . $data['total'] . "\n";
 
 components:
   schemas:
-    response:
-      type: object
-      properties:
-        mentions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Post'
-        limit:
-          type: integer
-          description: Cantidad máxima de menciones por página
-          example: 500
-        page:
-          type: integer
-          description: Página actual
-          example: 1
-        pages:
-          type: integer
-          description: Cantidad totales de páginas
-          example: 10
-        total:
-          type: integer
-          description: Total de menciones
-          example: 5000
-    Id:
-      type: string
-      format: UUIDv4
-      readOnly: true
-    Date:
-      type: string
-      example: 2017-12-25T19:20:47.064Z
-    Tags:
-        type: array
-        description: Array de etiquetas
-        example: ['VIP', 'Alerta']
-    Phrases:
-        type: array
-        description: Array de frases de valor dentro del texto
-        example: ['pulso electromagnético', 'prodcuto interno bruto']
-    Organizations:
-        type: array
-        description: Array de organizaciones, empresas, entidades o personas importantes mencionadas dentro del texto
-        example: ['OMS', 'ONU', 'Congreso de la Républica', 'Greenpeace']
-    Persons:
-        type: array
-        description: Array de personas importantes mencionadas dentro del texto
-        example: ['Presidente JFK', 'Mahatma Gandhi', 'Salvador Dalí']
-    Locations:
-        type: array
-        description: Array de ubicaciones mencionadas dentro del texto
-        example: ['Bogotá, Colombia', 'Valparaiso', 'Perú, Lima']
-    Commercial Items:
-        type: array
-        description: Array de productos comerciales mencionados dentro del texto
-        example: ['PS5', 'iPhone', 'Freidora de Aire', 'Peluche Abracitos']
-    Events:
-        type: array
-        description: Array de eventos mencionados dentro del texto
-        example: ['Lollapalooza', 'Super Bowl']
-    Dates:
-        type: array
-        description: Array de fechas mencionadas dentro del texto
-        example: ['Hace par de semanas', 'próximo fin de semana', 'noviembre de 1984', '12/10/2012']
-    Quantitys:
-        type: array
-        description: Array cantidades mencionadas dentro del texto
-        example: ['10%', '65 lucas', 'veinte mil hectareas', 'demasiados articulos']
-    User:
-      type: object
-      properties:
-        id_str:
-          type: string
-          description: ID del usuario heredado de fuente del dato
-          example: "442419559_442419559"
-        name:
-          type: string
-          description: Nombre declarado por el usuario como "Nombre real"
-          example: "Kambing Jantan 🐐"
-        username:
-          type: string
-          description: Nombre de usuario para dicha fuente de datos(Medio digital o red social)
-          example: ramablackhunter
-        picture:
-          type: string
-          description: URL del avatar del usuario
-          example: https://pbs.twimg.com/profile_images/1187193584547614720/UexmIfCm.jpg
-        followers:
-          type: integer
-          description: cantidad de seguidores
-          example: 160
-        type_user:
-          type: string
-          description: Tipo de usuario o de que medio digital proviene
-          enum:
-            - twitter
-            - facebook
-            - instagram
-        gender:
-          type: string
-          enum:
-            - female
-            - male
-            - bussiness
-            - other
-        location:
-          type: string
-          description: Lugar declarado por el usuario
-          example: "Valaparaiso, Chile"
     Collection:
       type: object
-      required:
-        - name
+      description: Representa un proyecto de monitoreo (colección de publicaciones).
       properties:
         id:
-          description: Identificador hexadecimal único para cada colección
-          example: d3447be04dbb48e5fa522852a835e18e
-          allOf:
-            - $ref: '#/components/schemas/Id'
-        name:
-          description: The name given to a pet
           type: string
-          example: Publicaciones de Twitter
+          description: Identificador hexadecimal único de la colección (32 caracteres)
+          example: "d3447be04dbb48e5fa522852a835e18e"
+        name:
+          type: string
+          description: Nombre del proyecto de monitoreo
+          example: "Banco de Chile"
         tags:
-          allOf:
-            - $ref: '#/components/schemas/Tags'
+          type: array
+          description: Etiquetas configuradas en el proyecto
+          items:
+            type: string
+          example: ["VIP", "Teletón", "Luksic"]
         status:
           type: string
           description: Estado actual del proyecto
           enum:
             - running
             - paused
+          example: "running"
         created_at:
-          description: Fecha de creación de la colección en formato ISO
-          allOf:
-            - $ref: '#/components/schemas/Date'
+          type: string
+          format: date-time
+          description: Fecha de creación en formato ISO 8601 UTC
+          example: "2022-04-13T16:23:23.367Z"
         updated_at:
-          description: Fecha de la última actualización de la colección en formato ISO
-          allOf:
-            - $ref: '#/components/schemas/Date'
-    Post:
+          type: string
+          format: date-time
+          description: Fecha de última actualización en formato ISO 8601 UTC
+          example: "2025-12-18T15:37:40.498Z"
+
+    User:
       type: object
-      discriminator:
-          propertyName: type_post
-          mapping:
-            Twitter: '#/components/schemas/Twitter'
-            Facebook: '#/components/schemas/Facebook'
-            Instagram: '#/components/schemas/Instagram'
-            Medios Digitales: '#/components/schemas/News'
+      description: Usuario autor de la publicación.
       properties:
         id_str:
           type: string
-          description: ID de la publicación
-          readOnly: true
-          example: '156484985298'
-        user:
-          description: Usuario autor de la publicación
-          allOf:
-            - $ref: '#/components/schemas/User'
+          description: ID del usuario en la plataforma de origen
+          example: "1186310497580310533"
+        name:
+          type: string
+          description: Nombre declarado por el usuario
+          example: "Banco de Chile"
+        username:
+          type: string
+          description: Nombre de usuario en la plataforma
+          example: "bancodechile"
+        picture:
+          type: string
+          description: URL del avatar del usuario
+          example: "https://pbs.twimg.com/profile_images/example.jpg"
+        followers:
+          type: integer
+          description: Cantidad de seguidores
+          example: 283852
+        location:
+          type: string
+          description: Lugar declarado por el usuario (puede no estar presente)
+          example: "Santiago, Chile"
+        gender:
+          type: string
+          description: Género detectado del usuario
+          enum:
+            - female
+            - male
+            - business
+            - other
+          example: "other"
+
+    Post:
+      type: object
+      description: |
+        Publicación base. Todos los tipos de publicación comparten estos campos.
+        Dependiendo del valor de `type_post`, la publicación puede incluir campos adicionales
+        específicos de la plataforma.
+      required:
+        - id
+        - created_at
+        - text
+        - type_post
+      properties:
+        id:
+          type: string
+          description: ID de la publicación en la plataforma de origen
+          example: "1995280867606843661"
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación de la publicación (ISO 8601 UTC)
+          example: "2025-11-30T23:56:44.000Z"
         text:
           type: string
-          description: Texto completo de la publicación de los datos
-          example: "kan lu sering minem buat mainan lu, 😅"
+          description: Texto completo de la publicación
+          example: "Banco de Chile entrega los mejores beneficios a sus clientes"
         likes:
           type: integer
-          description: Cantidad de "Me Gusta"
+          description: Cantidad de likes/me gusta
           example: 12
-        shared:
-          type: integer
-          description: Cantidad de veces que dicha publicación ha sido compartida
-          example: 20
-        comments:
-          type: integer
-          description: Cantidad de comentarios
-          example: 5
-        score:
-          type: number
-          description: Basado en la cantidad de interacciones y el número de seguidores se le da un nivel de importancia o impacto a la publicación
-          example: 1205.52
-        engagement:
-          type: number
-          example: 12.7
         link:
           type: string
-          description: Link a la publicación original
-          example: https://twitter.com/ramablackhunter/status/1187583984269578240
+          description: URL a la publicación original (puede no estar presente en algunas plataformas)
+          example: "https://twitter.com/usuario/status/1995280867606843661"
         image:
           type: string
-          description: Imagen o imágenes de la publicación o vista previa de contener un vídeo
-          example: https://instagram.flim2-1.fna.fbcdn.net/v/t51.2885-15/e35/81324234_475987726626426_8306335761980630333_n.jpg?_nc_ht=instagram.flim2-1.fna.fbcdn.net&_nc_cat=106&_nc_ohc=EiGL9f-dMskAX96KefV&oh=64535ae9ce7691386c47b13d1f2430f4&oe=5ED7C73D
+          description: URL de la imagen o vista previa de la publicación
+          example: "https://pbs.twimg.com/media/example.jpg"
+        type_post:
+          type: string
+          description: Plataforma de origen de la publicación
+          enum:
+            - twitter
+            - instagram
+            - instagram_comment
+            - facebook
+            - facebook_comment
+            - news
+            - tiktok
+            - tiktok_comment
+            - linkedin
+            - youtube
+            - youtube_comment
+            - spotify
+          example: "twitter"
         sentiment:
           type: string
-          description: Sentimiento de la publicación
+          description: Sentimiento detectado de la publicación
           enum:
             - positive
             - neutral
             - negative
-        type_post:
-          type: string
-          description: Fuente de la publicación
-          example: 'twitter'
+          example: "positive"
+        engagement:
+          type: number
+          description: Tasa de engagement (interacciones / seguidores)
+          example: 0.003
+        score:
+          type: number
+          description: Puntuación de impacto basada en interacciones y alcance
+          example: 1205.52
+        tags:
+          type: array
+          description: Etiquetas asignadas a la publicación
+          items:
+            type: string
+          example: ["VIP", "Teletón"]
+        phrases:
+          type: array
+          description: Frases relevantes extraídas del texto
+          items:
+            type: string
+          example: ["producto interno bruto", "pulso electromagnético"]
+        organizations:
+          type: array
+          description: Organizaciones, empresas o entidades mencionadas
+          items:
+            type: string
+          example: ["OMS", "Greenpeace"]
+        persons:
+          type: array
+          description: Personas mencionadas en el texto
+          items:
+            type: string
+          example: ["Salvador Dalí"]
+        locations:
+          type: array
+          description: Ubicaciones mencionadas en el texto
+          items:
+            type: string
+          example: ["chile", "santiago"]
+        commercial_items:
+          type: array
+          description: Productos comerciales mencionados
+          items:
+            type: string
+          example: ["iPhone", "PS5"]
+        events:
+          type: array
+          description: Eventos mencionados en el texto
+          items:
+            type: string
+          example: ["Lollapalooza", "Black Friday"]
+        dates:
+          type: array
+          description: Referencias temporales encontradas en el texto
+          items:
+            type: string
+          example: ["2013", "próximo fin de semana"]
         location:
           type: string
-          description: Lugar declarado por el usuario
-          example: "Lima, Perú"
-        created_at:
-          description: Fecha de creación de la publicación en formato ISO
-          allOf:
-            - $ref: '#/components/schemas/Date'
-        tags:
-          allOf:
-            - $ref: '#/components/schemas/Tags'
-        organizations:
-          allOf:
-            - $ref: '#/components/schemas/Organizations'
-        persons:
-          allOf:
-            - $ref: '#/components/schemas/Persons'
-        locations:
-          allOf:
-            - $ref: '#/components/schemas/Locations'
-        commercial_items:
-          allOf:
-            - $ref: '#/components/schemas/Commercial Items'
-        events:
-          allOf:
-            - $ref: '#/components/schemas/Events'
-        dates:
-          allOf:
-            - $ref: '#/components/schemas/Dates'
-        quantitys:
-          allOf:
-            - $ref: '#/components/schemas/Quantitys'
-    Twitter:
-      description: Publicación proveniente de Twitter
+          description: Ubicación geográfica asociada a la publicación
+          example: "Santiago, Chile"
+        user:
+          $ref: '#/components/schemas/User'
+
+    TwitterPost:
+      description: Publicación proveniente de Twitter/X. Incluye todos los campos base más campos específicos.
       allOf:
         - $ref: '#/components/schemas/Post'
         - type: object
           properties:
-            retweets:
-              type: integer
-              description: Cantidad de retweets del tweet
-              example: 20
             replies:
               type: integer
-              description: Cantidad de respuestas del tweet
+              description: Cantidad de respuestas
               example: 14
-            quoutes:
+            retweets:
               type: integer
-              description: Cantidad de veces que ha sido citado el tweet
-              example: 22
-    Instagram:
-      description: Publicación proveniente de Instagram
+              description: Cantidad de retweets
+              example: 20
+            quote:
+              type: integer
+              description: Cantidad de citas (quotes)
+              example: 3
+            views:
+              type: integer
+              description: Cantidad de visualizaciones (puede no estar presente)
+              example: 5200
+
+    InstagramPost:
+      description: Publicación proveniente de Instagram. Incluye todos los campos base más campos específicos.
       allOf:
         - $ref: '#/components/schemas/Post'
         - type: object
@@ -558,61 +803,305 @@ components:
               type: integer
               description: Cantidad de comentarios
               example: 12
-    News:
-      description: Publicaciones proveniente de Medios Digitales}
-      allOf:
-        - type: object
-          properties:
-            title:
-              type: string
-              description: Título de publicación
-              example: "This title for news"
-        - $ref: '#/components/schemas/Post'
-    Facebook:
-      description: Publicación proveniente de Facebook
+
+    FacebookPost:
+      description: Publicación proveniente de Facebook. Incluye todos los campos base más campos específicos.
       allOf:
         - $ref: '#/components/schemas/Post'
         - type: object
           properties:
             title:
               type: string
-              description: Título de publicación
-              example: "This title Facebook Post"
-            type:
+              description: Título de la publicación
+              example: "Nuevo servicio disponible"
+            comment:
+              type: integer
+              description: Cantidad de comentarios
+              example: 8
+            share:
+              type: integer
+              description: Cantidad de veces compartida
+              example: 15
+
+    NewsPost:
+      description: Publicación proveniente de medios digitales (noticias). Incluye todos los campos base más campos específicos.
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            title:
               type: string
-              description: Tipo de publicación
-              enum:
-                - video
-                - link
-                - foto
-            reactions:
-              type: object
-              description: Cantidad totalizada y desglosada de las reacciones de la publicación
-              properties:
-                total:
-                  type: integer
-                  description: Cantidad de total de reacciones
-                  example: 35
-                love:
-                  type: integer
-                  example: 8
-                wow:
-                  type: integer
-                  example: 10
-                haha:
-                  type: integer
-                  example: 12
-                sad:
-                  type: integer
-                  example: 10
-                angry:
-                  type: integer
-                  example: 5
+              description: Titular de la noticia
+              example: "San Felipe supera su meta de la Teletón"
+
+    TiktokPost:
+      description: Publicación proveniente de TikTok. Incluye todos los campos base más campos específicos.
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            replies:
+              type: integer
+              description: Cantidad de comentarios
+              example: 25
+            shares:
+              type: integer
+              description: Cantidad de veces compartida
+              example: 150
+            plays:
+              type: integer
+              description: Cantidad de reproducciones (puede no estar presente)
+              example: 50000
+            views:
+              type: integer
+              description: Cantidad de visualizaciones (puede no estar presente)
+              example: 48000
+
+    LinkedinPost:
+      description: Publicación proveniente de LinkedIn. Incluye todos los campos base más campos específicos.
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            replies:
+              type: integer
+              description: Cantidad de comentarios
+              example: 10
+            shares:
+              type: integer
+              description: Cantidad de veces compartida
+              example: 25
+            views:
+              type: integer
+              description: Cantidad de visualizaciones (puede no estar presente)
+              example: 3200
+
+    YoutubePost:
+      description: Publicación proveniente de YouTube. Incluye todos los campos base más campos específicos.
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            replies:
+              type: integer
+              description: Cantidad de comentarios
+              example: 45
+            plays:
+              type: integer
+              description: Cantidad de reproducciones (puede no estar presente)
+              example: 120000
+            views:
+              type: integer
+              description: Cantidad de visualizaciones (puede no estar presente)
+              example: 118000
+            dislikes:
+              type: integer
+              description: Cantidad de dislikes (puede no estar presente)
+              example: 3
+
+    SpotifyPost:
+      description: Publicación proveniente de Spotify. Incluye todos los campos base más campos específicos.
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            plays:
+              type: integer
+              description: Cantidad de reproducciones (puede no estar presente)
+              example: 85000
+
+    Word:
+      type: object
+      description: Palabra frecuente con su conteo de apariciones.
+      required:
+        - text
+        - count
+      properties:
+        text:
+          type: string
+          description: Palabra
+          example: "banco"
+        count:
+          type: integer
+          description: Cantidad de apariciones
+          example: 2363
+
+    PostsResponse:
+      type: object
+      description: Respuesta paginada de publicaciones.
+      properties:
+        mentions:
+          type: array
+          description: Lista de publicaciones
+          items:
+            $ref: '#/components/schemas/Post'
+        totalDocs:
+          type: integer
+          description: Total de publicaciones que coinciden con los filtros
+          example: 5419
+        limit:
+          type: integer
+          description: Cantidad máxima de publicaciones por página
+          example: 500
+        page:
+          type: integer
+          description: Página actual
+          example: 1
+        totalPages:
+          type: integer
+          description: Cantidad total de páginas
+          example: 11
+        pagingCounter:
+          type: integer
+          description: Índice del primer documento de la página actual
+          example: 1
+        hasPrevPage:
+          type: boolean
+          description: Indica si existe una página anterior
+          example: false
+        hasNextPage:
+          type: boolean
+          description: Indica si existe una página siguiente
+          example: true
+        prevPage:
+          type: integer
+          nullable: true
+          description: Número de la página anterior (null si no existe)
+          example: null
+        nextPage:
+          type: integer
+          nullable: true
+          description: Número de la página siguiente (null si no existe)
+          example: 2
+
+    WordsResponse:
+      type: object
+      description: Respuesta de nube de palabras.
+      properties:
+        words:
+          type: array
+          description: Lista de palabras frecuentes (máximo 40)
+          items:
+            $ref: '#/components/schemas/Word'
+        total:
+          type: integer
+          description: Total de publicaciones analizadas
+          example: 5419
+
+    Error:
+      type: object
+      description: Respuesta de error estándar.
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Código de error
+              example: "INVALID_CREDENTIALS"
+            message:
+              type: string
+              description: Descripción del error
+              example: "API Key is not valid"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-11-30T12:00:00.000Z"
+
+  responses:
+    Unauthorized:
+      description: API Key no válida, deshabilitada o no proporcionada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            missing:
+              summary: API Key no proporcionada
+              value:
+                success: false
+                error:
+                  code: "MISSING_CREDENTIALS"
+                  message: "API Key is required"
+                timestamp: "2025-11-30T12:00:00.000Z"
+            invalid:
+              summary: API Key no válida
+              value:
+                success: false
+                error:
+                  code: "INVALID_CREDENTIALS"
+                  message: "API Key is not valid"
+                timestamp: "2025-11-30T12:00:00.000Z"
+            disabled:
+              summary: API Key deshabilitada
+              value:
+                success: false
+                error:
+                  code: "INVALID_CREDENTIALS"
+                  message: "API Key is disabled"
+                timestamp: "2025-11-30T12:00:00.000Z"
+            suspended:
+              summary: Cuenta de cliente suspendida
+              value:
+                success: false
+                error:
+                  code: "CLIENT_SUSPENDED"
+                  message: "Client account is suspended"
+                timestamp: "2025-11-30T12:00:00.000Z"
+
+    IpNotAllowed:
+      description: La IP de origen no está en la lista de IPs permitidas de la API Key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "FORBIDDEN"
+              message: "Connection not allowed"
+            timestamp: "2025-11-30T12:00:00.000Z"
+
+    CollectionNotFound:
+      description: La colección no existe o no pertenece al cliente autenticado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "RESOURCE_NOT_FOUND"
+              message: "Collection not found"
+            timestamp: "2025-11-30T12:00:00.000Z"
+
+    InternalError:
+      description: Error interno del servidor.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "INTERNAL_ERROR"
+              message: "Connection failed"
+            timestamp: "2025-11-30T12:00:00.000Z"
+
   securitySchemes:
     ApiKey:
-      description: >
-        Luego de haber creado y obtenido el `ApiKey` dentro de la aplicación de **Tooldata**,
-        solo quedaría utilizar para obtener los datos.
+      description: |
+        Luego de haber creado y obtenido la `API Key` dentro de la aplicación de **Tooldata**,
+        utilízala en el header `Authorization` con el prefijo `ApiKey`.
+
+        Ejemplo: `Authorization: ApiKey td_live_abc123def456`
+
+        También puedes enviarla como:
+        - Header `x-access-token`: `td_live_abc123def456`
+        - Query param: `?ApiKey=td_live_abc123def456`
       type: apiKey
       name: Authorization
       in: header

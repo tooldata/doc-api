@@ -1,21 +1,27 @@
-version: '3'
 services:
   redoc:
-    container_name: redoc
+    container_name: doc-api-redoc
     image: redocly/redoc:latest
     environment:
       - PAGE_TITLE=Tooldata API
-      - PAGE_FAVICON=https://www.tooldata.io/favicon.ico
-      - SPEC_URL=http://localhost/openapi.yaml
+      - PAGE_FAVICON=https://app.tooldata.io/favicon.ico
+      - SPEC_URL=/openapi.yaml
       - PORT=3000
+    restart: unless-stopped
 
   nginx:
-    container_name: nginx_static
-    image: nginx:latest
+    container_name: doc-api-nginx
+    image: nginx:alpine
     volumes:
-     - ./default.conf:/etc/nginx/conf.d/default.conf
-     - .:/var/www
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./openapi.yaml:/var/www/openapi.yaml:ro
     ports:
-      - 80:80
-    links:
+      - "8085:80"
+    depends_on:
       - redoc
+    restart: unless-stopped
+
+networks:
+  default:
+    name: v2_default
+    external: true
