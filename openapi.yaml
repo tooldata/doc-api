@@ -94,7 +94,7 @@ info:
     email: hola@tooldata.io
     url: https://www.tooldata.io
   x-logo:
-    url: 'https://www.tooldata.io/assets/logo.png?v=e0d2f03442'
+    url: 'https://raw.githubusercontent.com/tooldata/doc-api/master/logo.svg'
     altText: Tooldata logo
 tags:
   - name: collection

@@ -4,7 +4,7 @@ services:
     image: redocly/redoc:v2.5.0
     environment:
       - PAGE_TITLE=Tooldata API
-      - PAGE_FAVICON=https://app.tooldata.io/favicon.ico
+      - PAGE_FAVICON=https://raw.githubusercontent.com/tooldata/doc-api/master/favicon.svg
       - SPEC_URL=https://raw.githubusercontent.com/tooldata/doc-api/master/openapi.yaml
     restart: unless-stopped
 
