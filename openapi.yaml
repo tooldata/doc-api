@@ -71,15 +71,51 @@ tags:
   - name: collection_model
     x-displayName: Modelo Colección
     description: |
-      <SchemaDefinition schemaRef="#/components/schemas/Collection" />
+      <SchemaDefinition schemaRef="#/components/schemas/Collection" showReadOnly={true} showWriteOnly={true} />
   - name: post_model
     x-displayName: Modelo Publicación
     description: |
-      <SchemaDefinition schemaRef="#/components/schemas/Post" />
+      Campos base de toda publicación:
+
+      <SchemaDefinition schemaRef="#/components/schemas/Post" showReadOnly={true} showWriteOnly={true} />
+
+      ## Campos por plataforma
+
+      Dependiendo del `type_post`, la publicación incluye campos adicionales:
+
+      | Plataforma | Campos adicionales |
+      |------------|--------------------|
+      | **twitter** | `replies`, `retweets`, `quote`, `views` |
+      | **instagram** | `comments` |
+      | **facebook** | `title`, `comment`, `share` |
+      | **news** | `title` |
+      | **tiktok** | `replies`, `shares`, `plays`, `views` |
+      | **linkedin** | `replies`, `shares`, `views` |
+      | **youtube** | `replies`, `plays`, `views`, `dislikes` |
+      | **spotify** | `plays` |
   - name: word_model
     x-displayName: Modelo Palabra
     description: |
-      <SchemaDefinition schemaRef="#/components/schemas/Word" />
+      <SchemaDefinition schemaRef="#/components/schemas/Word" showReadOnly={true} showWriteOnly={true} />
+  - name: pagination_model
+    x-displayName: Paginación
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/PostsResponse" showReadOnly={true} showWriteOnly={true} />
+  - name: error_model
+    x-displayName: Errores
+    description: |
+      <SchemaDefinition schemaRef="#/components/schemas/Error" showReadOnly={true} showWriteOnly={true} />
+
+      ## Códigos de error
+
+      | Código HTTP | code | Descripción |
+      |-------------|------|-------------|
+      | 401 | `FORBIDDEN` | IP no permitida |
+      | 403 | `MISSING_CREDENTIALS` | API Key no proporcionada |
+      | 403 | `INVALID_CREDENTIALS` | API Key no válida o deshabilitada |
+      | 403 | `CLIENT_SUSPENDED` | Cuenta de cliente suspendida |
+      | 404 | `RESOURCE_NOT_FOUND` | Colección no encontrada |
+      | 500 | `INTERNAL_ERROR` | Error interno del servidor |
 x-tagGroups:
   - name: Endpoints
     tags:
@@ -91,6 +127,8 @@ x-tagGroups:
       - collection_model
       - post_model
       - word_model
+      - pagination_model
+      - error_model
 
 paths:
   /collections:
