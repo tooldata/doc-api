@@ -1,7 +1,11 @@
 openapi: 3.0.3
 servers:
+  - url: https://api.tooldata.io/v2
+    description: Producción (v2 — recomendada)
+  - url: https://api.tooldata.io/v1
+    description: Producción (v1 — legacy)
   - url: https://api.tooldata.io
-    description: Producción
+    description: Producción (sin versión — deprecada, usar /v2)
 info:
   version: 2.0.0
   title: Tooldata Social Listening API
@@ -48,6 +52,14 @@ info:
     # Filtros
     Los endpoints de posts y palabras soportan filtros opcionales por plataforma, sentimiento y género.
     Los valores se envían como strings separados por comas (ejemplo: `type=twitter,instagram`).
+
+    # Versionado
+    La API soporta versionado mediante prefijo en la URL:
+    - **`/v2`** — Versión actual recomendada
+    - **`/v1`** — Versión legacy (misma funcionalidad, compatibilidad retroactiva)
+    - Sin prefijo — **Deprecada**, se eliminará en futuras versiones. Migrar a `/v2`.
+
+    Ejemplo: `https://api.tooldata.io/v2/collections`
 
     # Rate Limiting
     La API pública tiene un límite de **10 solicitudes por segundo** por IP, con un burst máximo de 20.
@@ -140,12 +152,12 @@ paths:
           source: |
             curl -H 'Accept: application/json' \
                   -H "Authorization: ApiKey <tu_api_key>" \
-                  https://api.tooldata.io/collections
+                  https://api.tooldata.io/v2/collections
         - lang: Python
           source: |
             import requests
 
-            API_URL = 'https://api.tooldata.io'
+            API_URL = 'https://api.tooldata.io/v2'
             API_KEY = '<tu_api_key>'
             HEADERS = {
                 'Content-type': 'application/json',
@@ -156,7 +168,7 @@ paths:
             print(response.json())
         - lang: JavaScript
           source: |
-            const API_URL = 'https://api.tooldata.io';
+            const API_URL = 'https://api.tooldata.io/v2';
             const API_KEY = '<tu_api_key>';
 
             const response = await fetch(`${API_URL}/collections`, {
@@ -169,7 +181,7 @@ paths:
             console.log(data);
         - lang: PHP
           source: |
-            define('API_URL', 'https://api.tooldata.io');
+            define('API_URL', 'https://api.tooldata.io/v2');
             define('API_KEY', '<tu_api_key>');
 
             $header = [
@@ -292,12 +304,12 @@ paths:
           source: |
             curl -H 'Accept: application/json' \
                   -H "Authorization: ApiKey <tu_api_key>" \
-                  "https://api.tooldata.io/collections/<collectionId>/posts?since=2025-11-01T00:00:00.000Z&until=2025-11-30T23:59:59.999Z&limit=100"
+                  "https://api.tooldata.io/v2/collections/<collectionId>/posts?since=2025-11-01T00:00:00.000Z&until=2025-11-30T23:59:59.999Z&limit=100"
         - lang: Python
           source: |
             import requests
 
-            API_URL = 'https://api.tooldata.io'
+            API_URL = 'https://api.tooldata.io/v2'
             API_KEY = '<tu_api_key>'
             COLLECTION_ID = '<collectionId>'
             HEADERS = {
@@ -324,7 +336,7 @@ paths:
                 print(f"  [{post['type_post']}] {post['text'][:80]}...")
         - lang: JavaScript
           source: |
-            const API_URL = 'https://api.tooldata.io';
+            const API_URL = 'https://api.tooldata.io/v2';
             const API_KEY = '<tu_api_key>';
             const COLLECTION_ID = '<collectionId>';
 
@@ -348,7 +360,7 @@ paths:
             console.log(`Total: ${data.totalDocs} publicaciones`);
         - lang: PHP
           source: |
-            define('API_URL', 'https://api.tooldata.io');
+            define('API_URL', 'https://api.tooldata.io/v2');
             define('API_KEY', '<tu_api_key>');
 
             $collectionId = '<collectionId>';
@@ -457,12 +469,12 @@ paths:
           source: |
             curl -H 'Accept: application/json' \
                   -H "Authorization: ApiKey <tu_api_key>" \
-                  "https://api.tooldata.io/collections/<collectionId>/words?since=2025-11-01T00:00:00.000Z&until=2025-11-30T23:59:59.999Z"
+                  "https://api.tooldata.io/v2/collections/<collectionId>/words?since=2025-11-01T00:00:00.000Z&until=2025-11-30T23:59:59.999Z"
         - lang: Python
           source: |
             import requests
 
-            API_URL = 'https://api.tooldata.io'
+            API_URL = 'https://api.tooldata.io/v2'
             API_KEY = '<tu_api_key>'
             COLLECTION_ID = '<collectionId>'
             HEADERS = {
@@ -484,7 +496,7 @@ paths:
                 print(f"  {word['text']}: {word['count']}")
         - lang: JavaScript
           source: |
-            const API_URL = 'https://api.tooldata.io';
+            const API_URL = 'https://api.tooldata.io/v2';
             const API_KEY = '<tu_api_key>';
             const COLLECTION_ID = '<collectionId>';
 
@@ -507,7 +519,7 @@ paths:
             data.words.forEach(w => console.log(`  ${w.text}: ${w.count}`));
         - lang: PHP
           source: |
-            define('API_URL', 'https://api.tooldata.io');
+            define('API_URL', 'https://api.tooldata.io/v2');
             define('API_KEY', '<tu_api_key>');
 
             $collectionId = '<collectionId>';
