@@ -68,14 +68,14 @@ info:
     # Plataformas soportadas
     | Plataforma | type_post | Campos adicionales |
     |------------|-----------|--------------------|
-    | Twitter/X | `twitter` | `replies`, `retweets`, `quote`, `views` |
-    | Instagram | `instagram`, `instagram_comment` | `comments` |
-    | Facebook | `facebook`, `facebook_comment` | `title`, `comment`, `share` |
+    | Twitter/X | `twitter` | `replies`, `shares`, `quotes`, `views` |
+    | Instagram | `instagram`, `instagram_comment` | `replies` |
+    | Facebook | `facebook`, `facebook_comment` | `title`, `replies`, `shares` |
     | Medios digitales | `news` | `title` |
-    | TikTok | `tiktok`, `tiktok_comment` | `replies`, `shares`, `plays`, `views` |
+    | TikTok | `tiktok`, `tiktok_comment` | `replies`, `shares`, `views` |
     | LinkedIn | `linkedin` | `replies`, `shares`, `views` |
-    | YouTube | `youtube`, `youtube_comment` | `replies`, `plays`, `views`, `dislikes` |
-    | Spotify | `spotify` | `plays` |
+    | YouTube | `youtube`, `youtube_comment` | `replies`, `views` |
+    | Spotify | `spotify` | `views` |
 
     # Errores
     | Código HTTP | Código | Descripción |
@@ -758,44 +758,20 @@ components:
           example: San Felipe supera su meta de la Teletón
         replies:
           type: integer
-          description: Cantidad de respuestas/comentarios (twitter, tiktok, linkedin, youtube)
+          description: Cantidad de respuestas/comentarios (twitter, instagram, facebook, tiktok, linkedin, youtube)
           example: 14
-        retweets:
+        shares:
           type: integer
-          description: Cantidad de retweets (solo twitter)
+          description: Veces compartida (twitter, facebook, tiktok, linkedin)
           example: 20
-        quote:
+        quotes:
           type: integer
           description: Cantidad de citas (solo twitter)
           example: 3
         views:
           type: integer
-          description: Visualizaciones (twitter, tiktok, linkedin, youtube)
+          description: Visualizaciones/reproducciones (twitter, tiktok, linkedin, youtube, spotify)
           example: 5200
-        comments:
-          type: integer
-          description: Cantidad de comentarios (solo instagram)
-          example: 12
-        comment:
-          type: integer
-          description: Cantidad de comentarios (solo facebook)
-          example: 8
-        share:
-          type: integer
-          description: Veces compartida (solo facebook)
-          example: 15
-        shares:
-          type: integer
-          description: Veces compartida (tiktok, linkedin)
-          example: 150
-        plays:
-          type: integer
-          description: Reproducciones (tiktok, youtube, spotify)
-          example: 50000
-        dislikes:
-          type: integer
-          description: Dislikes (solo youtube)
-          example: 3
 
     Word:
       type: object
