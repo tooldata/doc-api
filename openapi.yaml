@@ -330,8 +330,8 @@ paths:
             response = requests.get(url, headers=HEADERS, params=params)
             data = response.json()
 
-            print(f"Total: {data['totalDocs']} publicaciones")
-            print(f"Pagina {data['page']} de {data['totalPages']}")
+            print(f"Total: {data['total']} publicaciones")
+            print(f"Pagina {data['page']} de {data['pages']}")
             for post in data['mentions']:
                 print(f"  [{post['type_post']}] {post['text'][:80]}...")
         - lang: JavaScript
@@ -357,7 +357,7 @@ paths:
               }
             );
             const data = await response.json();
-            console.log(`Total: ${data.totalDocs} publicaciones`);
+            console.log(`Total: ${data.total} publicaciones`);
         - lang: PHP
           source: |
             define('API_URL', 'https://api.tooldata.io/v2');
@@ -387,7 +387,7 @@ paths:
             curl_close($curl);
 
             $data = json_decode($result, true);
-            echo "Total: " . $data['totalDocs'] . " publicaciones\n";
+            echo "Total: " . $data['total'] . " publicaciones\n";
 
   '/collections/{collectionId}/words':
     get:
@@ -794,7 +794,7 @@ components:
           description: Lista de publicaciones
           items:
             $ref: '#/components/schemas/Post'
-        totalDocs:
+        total:
           type: integer
           description: Total de publicaciones que coinciden con los filtros
           example: 5419
@@ -806,32 +806,10 @@ components:
           type: integer
           description: Página actual
           example: 1
-        totalPages:
+        pages:
           type: integer
           description: Total de páginas
           example: 11
-        pagingCounter:
-          type: integer
-          description: Índice del primer documento de la página actual
-          example: 1
-        hasPrevPage:
-          type: boolean
-          description: Existe página anterior
-          example: false
-        hasNextPage:
-          type: boolean
-          description: Existe página siguiente
-          example: true
-        prevPage:
-          type: integer
-          nullable: true
-          description: Número de página anterior (null si no existe)
-          example: null
-        nextPage:
-          type: integer
-          nullable: true
-          description: Número de página siguiente (null si no existe)
-          example: 2
 
     WordsResponse:
       type: object
