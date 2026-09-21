@@ -73,7 +73,7 @@ info:
     | Facebook | `facebook`, `facebook_comment` | `title`, `replies`, `shares` |
     | Medios digitales | `news` | `title` |
     | TikTok | `tiktok`, `tiktok_comment` | `replies`, `shares`, `views` |
-    | LinkedIn | `linkedin` | `replies`, `shares`, `views` |
+    | LinkedIn | `linkedin`, `linkedin_comment` | `replies`, `shares`, `views` |
     | YouTube | `youtube`, `youtube_comment` | `replies`, `views` |
     | Spotify | `spotify` | `views` |
 
@@ -667,6 +667,7 @@ components:
             - tiktok
             - tiktok_comment
             - linkedin
+            - linkedin_comment
             - youtube
             - youtube_comment
             - spotify
@@ -758,11 +759,11 @@ components:
           example: San Felipe supera su meta de la Teletón
         replies:
           type: integer
-          description: Cantidad de respuestas/comentarios (twitter, instagram, facebook, tiktok, linkedin, youtube)
+          description: Cantidad de respuestas/comentarios (twitter, instagram, facebook, tiktok, linkedin, linkedin_comment, youtube)
           example: 14
         shares:
           type: integer
-          description: Veces compartida (twitter, facebook, tiktok, linkedin)
+          description: Veces compartida (twitter, facebook, tiktok, linkedin, linkedin_comment)
           example: 20
         quotes:
           type: integer
@@ -770,7 +771,7 @@ components:
           example: 3
         views:
           type: integer
-          description: Visualizaciones/reproducciones (twitter, tiktok, linkedin, youtube, spotify)
+          description: Visualizaciones/reproducciones (twitter, tiktok, linkedin, linkedin_comment, youtube, spotify)
           example: 5200
 
     Word:
