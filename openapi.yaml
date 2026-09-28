@@ -1,11 +1,11 @@
 openapi: 3.0.3
 servers:
   - url: https://api.tooldata.io/v2
-    description: Producción (v2 — recomendada)
+    description: Producción (v2, actual y recomendada)
   - url: https://api.tooldata.io/v1
-    description: Producción (v1 — legacy)
+    description: Producción (v1, deprecada; migra a /v2)
   - url: https://api.tooldata.io
-    description: Producción (sin versión — deprecada, usar /v2)
+    description: Producción (sin versión, deprecada; migra a /v2)
 info:
   version: 2.0.0
   title: Tooldata Social Listening API
@@ -28,6 +28,7 @@ info:
     * Consultar los proyectos de monitoreo configurados (colecciones)
     * Consultar publicaciones de los proyectos de monitoreo
     * Consultar las palabras más frecuentes de un proyecto (nube de palabras)
+    * Consultar los términos de búsqueda (keywords) configurados en un proyecto
 
     # Autenticación
     Para obtener la API Key debes ingresar a nuestro [sistema](https://app.tooldata.io) utilizando un usuario con permisos de Administrador.
@@ -39,53 +40,99 @@ info:
     | Método | Formato |
     |--------|---------|
     | Header `Authorization` | `ApiKey <tu_api_key>` |
-    | Header `x-access-token` | `<tu_api_key>` |
+    | Header `x-access-token` | `ApiKey <tu_api_key>` |
     | Query param | `?ApiKey=<tu_api_key>` |
+
+    En ambos headers el valor debe empezar exactamente por `ApiKey ` (con esas mayúsculas y un espacio); sin ese
+    prefijo la API Key se rechaza. Usa un solo método por solicitud: si envías el query param junto con alguno de
+    los headers, la API Key se considera no válida. Si usas el query param, codifica la API Key para URL.
 
     # Fechas
     Todas las fechas deben enviarse y se devuelven en formato **ISO 8601 UTC** (ejemplo: `2025-11-01T00:00:00.000Z`).
+    `since` debe ser anterior a `until`.
 
     # Paginación
-    Los endpoints que devuelven listas paginadas incluyen metadatos de paginación en la respuesta.
-    Por defecto se retornan **500 registros** por página, con un máximo de **1000**.
+    El endpoint de posts es paginado y su respuesta incluye `total`, `limit`, `page` y `pages`.
+    Por defecto se retornan **500 registros** por página, con un máximo de **1000**; un `limit` mayor responde
+    **400**. Una página posterior a la última devuelve `mentions` vacío.
 
     # Filtros
-    Los endpoints de posts y palabras soportan filtros opcionales por plataforma, sentimiento y género.
-    Los valores se envían como strings separados por comas (ejemplo: `type=twitter,instagram`).
+    Los endpoints de posts y palabras aceptan filtros opcionales. `type`, `sentiment` y `gender` se envían como
+    valores separados por comas y no distinguen mayúsculas de minúsculas (ejemplo: `type=twitter,instagram`).
+
+    | Parámetro | Valores | Endpoints |
+    |-----------|---------|-----------|
+    | `type` | Valores de `type_post` (ver Plataformas soportadas) | posts, words |
+    | `sentiment` | `positive`, `neutral`, `negative`, `mixed`, `without` (sin sentimiento) | posts, words |
+    | `gender` | `m` (masculino), `f` (femenino), `c` (corporativo), `o` (otro), `w` (sin género) | posts, words |
+    | `tags[]` | Nombre exacto de la etiqueta; se repite por cada una | posts |
+
+    Con varias etiquetas se devuelven las publicaciones que tienen cualquiera de ellas. En las respuestas el
+    sentimiento `mixed` se devuelve como `neutral`: para obtener todas las publicaciones que verás como neutrales,
+    filtra por `sentiment=neutral,mixed`. Los códigos de `gender` no reconocidos y los parámetros no documentados
+    se ignoran.
 
     # Versionado
-    La API soporta versionado mediante prefijo en la URL:
-    - **`/v2`** — Versión actual recomendada
-    - **`/v1`** — Versión legacy (misma funcionalidad, compatibilidad retroactiva)
-    - Sin prefijo — **Deprecada**, se eliminará en futuras versiones. Migrar a `/v2`.
+    La versión se indica con un prefijo en la URL:
+
+    | Prefijo | Estado |
+    |---------|--------|
+    | `/v2` | **Actual.** Única versión recomendada; es la que describe esta documentación. |
+    | `/v1` | **Deprecada.** Se retirará en una versión futura; migra a `/v2`. |
+    | Sin prefijo | **Deprecada.** Se retirará en una versión futura; migra a `/v2`. |
 
     Ejemplo: `https://api.tooldata.io/v2/collections`
 
+    `/v1` y la URL sin prefijo responden con la implementación anterior, que no es equivalente a `/v2`. Al migrar,
+    ten en cuenta estas diferencias:
+    * **Errores**: `/v1` responde `{"status": "error", "message": "..."}`, sin `success`, `error.code` ni `timestamp`.
+    * **Códigos HTTP**: en `/v1`, una colección inexistente o ajena y la falta de `since` o `until` responden
+      **500**; en `/v2` responden 404 y 400.
+    * **Paginación**: `/v1` recorta en silencio un `limit` superior a 5000; `/v2` admite hasta 1000 y responde 400
+      si se supera.
+    * **Campos de métricas**: `/v1` usa `retweets` y `quote` (Twitter/X y TikTok), `comment` y `share` (Facebook) y
+      `comments` (Instagram); `/v2` usa `replies`, `shares` y `quotes`.
+    * **Sentimiento**: `/v1` devuelve además `sentiment_full` y el valor `mixed`; `/v2` no incluye `sentiment_full` y
+      devuelve `neutral` para las publicaciones mixtas. El filtro `sentiment` de `/v1` exige mayúsculas (`POSITIVE`).
+    * **Parámetros**: `/v2` ignora los parámetros `word` y `user` que aceptaba `/v1`.
+    * **Keywords**: `GET /collections/{collectionId}/keywords` solo existe en `/v2`.
+
     # Rate Limiting
-    La API pública tiene un límite de **10 solicitudes por segundo** por IP, con un burst máximo de 20.
-    Si se excede el límite, se recibirá un error **429 Too Many Requests**.
+    En `/v2` se aplican dos límites:
+    * **Por IP de origen**: 10 solicitudes por segundo, con ráfagas de hasta 150 solicitudes adicionales.
+    * **Por API Key**: 3.000 solicitudes cada 15 minutos.
+
+    Al superar cualquiera de ellos se recibe **429 Too Many Requests** con el código `RATE_LIMIT_EXCEEDED` y el
+    header `Retry-After`, que indica cuántos segundos esperar. El límite por API Key informa además la espera en
+    `error.retryAfter` y el cupo en los headers `RateLimit-Limit`, `RateLimit-Remaining` y `RateLimit-Reset`.
+    Tras un 429, espera ese tiempo y continúa desde la última página recibida en lugar de reiniciar la descarga.
 
     # Plataformas soportadas
+    Los campos adicionales se incluyen solo cuando la plataforma los informa.
+
     | Plataforma | type_post | Campos adicionales |
     |------------|-----------|--------------------|
-    | Twitter/X | `twitter` | `replies`, `shares`, `quotes`, `views` |
-    | Instagram | `instagram`, `instagram_comment` | `replies` |
+    | Twitter/X | `twitter` | `replies`, `shares`, `quotes` |
+    | Instagram | `instagram`, `instagram_comment` | `replies` (solo `instagram`) |
     | Facebook | `facebook`, `facebook_comment` | `title`, `replies`, `shares` |
     | Medios digitales | `news` | `title` |
-    | TikTok | `tiktok`, `tiktok_comment` | `replies`, `shares`, `views` |
-    | LinkedIn | `linkedin`, `linkedin_comment` | `replies`, `shares`, `views` |
-    | YouTube | `youtube`, `youtube_comment` | `replies`, `views` |
-    | Spotify | `spotify` | `views` |
+    | TikTok | `tiktok` | `replies`, `views` |
+    | LinkedIn | `linkedin`, `linkedin_comment` | `replies` |
+    | YouTube | `youtube` | `replies`, `views` |
+    | Spotify | `spotify` | — |
+
+    En los medios digitales (`news`) no se incluyen `engagement` ni `user.followers`.
 
     # Errores
     | Código HTTP | Código | Descripción |
     |-------------|--------|-------------|
-    | 401 | `FORBIDDEN` | IP de origen no permitida |
+    | 400 | `VALIDATION_ERROR` | Parámetros no válidos: fechas ausentes o mal formadas, `page` o `limit` fuera de rango |
+    | 401 | `FORBIDDEN` | IP de origen no permitida para la API Key |
     | 403 | `MISSING_CREDENTIALS` | API Key no proporcionada |
-    | 403 | `INVALID_CREDENTIALS` | API Key no válida o deshabilitada |
+    | 403 | `INVALID_CREDENTIALS` | API Key no válida, sin el prefijo `ApiKey` o deshabilitada |
     | 403 | `CLIENT_SUSPENDED` | Cuenta de cliente suspendida |
-    | 404 | `RESOURCE_NOT_FOUND` | Colección no encontrada |
-    | 429 | — | Límite de solicitudes excedido |
+    | 404 | `RESOURCE_NOT_FOUND` | Colección no encontrada o que no pertenece a tu cuenta |
+    | 429 | `RATE_LIMIT_EXCEEDED` | Límite de solicitudes excedido |
     | 500 | `INTERNAL_ERROR` | Error interno del servidor |
 
     Formato de respuesta de error:
@@ -95,6 +142,23 @@ info:
       "error": {
         "code": "INVALID_CREDENTIALS",
         "message": "API Key is not valid"
+      },
+      "timestamp": "2025-11-30T12:00:00.000Z"
+    }
+    ```
+
+    Cuando el error afecta a parámetros concretos, `error.details.errors` los detalla:
+    ```json
+    {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Los datos enviados no son válidos",
+        "details": {
+          "errors": [
+            { "field": "since", "message": "since is required", "type": "any.required" }
+          ]
+        }
       },
       "timestamp": "2025-11-30T12:00:00.000Z"
     }
@@ -117,12 +181,15 @@ tags:
     description: Publicaciones capturadas desde diferentes medios digitales y redes sociales.
   - name: word
     description: Palabras más frecuentes extraídas de las publicaciones de una colección.
+  - name: keyword
+    description: Términos de búsqueda configurados en una colección, agrupados por plataforma.
 x-tagGroups:
   - name: Endpoints
     tags:
       - collection
       - post
       - word
+      - keyword
 
 paths:
   /collections:
@@ -144,7 +211,7 @@ paths:
         '401':
           description: IP no permitida
         '403':
-          description: API Key no válida o requerida
+          description: API Key no válida o requerida, o cliente suspendido
       security:
         - ApiKey: []
       x-codeSamples:
@@ -220,7 +287,7 @@ paths:
             example: '1c8ef41de1744e5bb00d198b727555e7'
         - name: since
           in: query
-          description: Fecha de inicio (ISO 8601 UTC)
+          description: Fecha de inicio (ISO 8601 UTC). Debe ser anterior a `until`.
           required: true
           schema:
             type: string
@@ -244,7 +311,7 @@ paths:
             default: 1
         - name: limit
           in: query
-          description: Publicaciones por página (máximo 1000)
+          description: Publicaciones por página (máximo 1000; un valor mayor responde 400)
           required: false
           schema:
             type: integer
@@ -253,32 +320,32 @@ paths:
             default: 500
         - name: type
           in: query
-          description: 'Filtrar por plataforma (separado por comas: `twitter,instagram`)'
+          description: 'Filtrar por plataforma: valores de `type_post` separados por comas (`twitter,instagram`)'
           required: false
           schema:
             type: string
         - name: sentiment
           in: query
-          description: 'Filtrar por sentimiento (separado por comas: `positive,neutral,negative`)'
+          description: 'Filtrar por sentimiento, separado por comas: `positive`, `neutral`, `negative`, `mixed` o `without` (sin sentimiento)'
           required: false
           schema:
             type: string
         - name: gender
           in: query
-          description: 'Filtrar por género (separado por comas: `male,female,business,other`)'
+          description: 'Filtrar por género del autor con códigos separados por comas: `m` (masculino), `f` (femenino), `c` (corporativo), `o` (otro), `w` (sin género)'
           required: false
           schema:
             type: string
         - name: order
           in: query
-          description: 'Ordenamiento. Prefijo `-` para descendente. Campos: `created_at`, `likes_count`, `retweets_count`, `replies_count`, `score`, `engagement`, `total_interactions_count`, `play_count`'
+          description: 'Ordenamiento. Prefijo `-` para descendente. Campos: `created_at`, `likes_count`, `retweets_count`, `replies_count`, `score`, `engagement`, `total_interactions_count`, `play_count`. Un campo no permitido se ignora y se aplica `-created_at`.'
           required: false
           schema:
             type: string
             default: '-created_at'
         - name: tags[]
           in: query
-          description: 'Filtrar por etiquetas. Repetir por cada etiqueta: `tags[]=VIP&tags[]=Alerta`'
+          description: 'Filtrar por etiquetas (nombre exacto). Repetir por cada etiqueta: `tags[]=VIP&tags[]=Alerta`. Devuelve las publicaciones que tienen cualquiera de ellas.'
           required: false
           schema:
             type: array
@@ -293,10 +360,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostsResponse'
+        '400':
+          description: Parámetros no válidos
         '401':
           description: IP no permitida
         '403':
-          description: API Key no válida o requerida
+          description: API Key no válida o requerida, o cliente suspendido
         '404':
           description: Colección no encontrada
       x-codeSamples:
@@ -408,7 +477,7 @@ paths:
             example: '1c8ef41de1744e5bb00d198b727555e7'
         - name: since
           in: query
-          description: Fecha de inicio (ISO 8601 UTC)
+          description: Fecha de inicio (ISO 8601 UTC). Debe ser anterior a `until`.
           required: true
           schema:
             type: string
@@ -424,19 +493,19 @@ paths:
             example: '2025-11-30T23:59:59.999Z'
         - name: type
           in: query
-          description: 'Filtrar por plataforma (separado por comas)'
+          description: 'Filtrar por plataforma: valores de `type_post` separados por comas (`twitter,instagram`)'
           required: false
           schema:
             type: string
         - name: sentiment
           in: query
-          description: 'Filtrar por sentimiento (separado por comas)'
+          description: 'Filtrar por sentimiento, separado por comas: `positive`, `neutral`, `negative`, `mixed` o `without` (sin sentimiento)'
           required: false
           schema:
             type: string
         - name: gender
           in: query
-          description: 'Filtrar por género (separado por comas)'
+          description: 'Filtrar por género del autor con códigos separados por comas: `m` (masculino), `f` (femenino), `c` (corporativo), `o` (otro), `w` (sin género)'
           required: false
           schema:
             type: string
@@ -458,10 +527,12 @@ paths:
                   - text: teleton
                     count: 1040
                 total: 5419
+        '400':
+          description: Parámetros no válidos
         '401':
           description: IP no permitida
         '403':
-          description: API Key no válida o requerida
+          description: API Key no válida o requerida, o cliente suspendido
         '404':
           description: Colección no encontrada
       x-codeSamples:
@@ -546,6 +617,137 @@ paths:
             $data = json_decode($result, true);
             echo "Total publicaciones: " . $data['total'] . "\n";
 
+  '/collections/{collectionId}/keywords':
+    get:
+      tags:
+        - keyword
+      summary: Obtener keywords de una colección
+      description: |
+        Devuelve los términos de búsqueda (keywords) configurados en una colección, agrupados por plataforma.
+        La respuesta incluye siempre las 8 plataformas; las que no tienen keywords devuelven un array vacío.
+
+        Disponible solo en `/v2`.
+      operationId: getKeywords
+      servers:
+        - url: https://api.tooldata.io/v2
+          description: Producción (v2, actual y recomendada)
+      parameters:
+        - name: collectionId
+          in: path
+          description: ID de la colección (hexadecimal de 32 caracteres)
+          required: true
+          schema:
+            type: string
+            example: '1c8ef41de1744e5bb00d198b727555e7'
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: Keywords agrupadas por plataforma
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeywordsResponse'
+              example:
+                collection: 1c8ef41de1744e5bb00d198b727555e7
+                platforms:
+                  twitter:
+                    - keyword: banco de chile
+                      active: true
+                      language: es
+                      city: null
+                      retweets: false
+                      realtime: true
+                  instagram:
+                    - keyword: bancodechile
+                      active: true
+                  facebook: []
+                  tiktok:
+                    - keyword: banco de chile
+                      recommended: false
+                  news:
+                    - keyword: banco de chile
+                      country: CL
+                  linkedin: []
+                  youtube: []
+                  spotify: []
+                total: 4
+        '401':
+          description: IP no permitida
+        '403':
+          description: API Key no válida o requerida, o cliente suspendido
+        '404':
+          description: Colección no encontrada
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl -H 'Accept: application/json' \
+                  -H "Authorization: ApiKey <tu_api_key>" \
+                  https://api.tooldata.io/v2/collections/<collectionId>/keywords
+        - lang: Python
+          source: |
+            import requests
+
+            API_URL = 'https://api.tooldata.io/v2'
+            API_KEY = '<tu_api_key>'
+            COLLECTION_ID = '<collectionId>'
+            HEADERS = {
+                'Content-type': 'application/json',
+                'Authorization': f'ApiKey {API_KEY}'
+            }
+
+            url = f'{API_URL}/collections/{COLLECTION_ID}/keywords'
+            response = requests.get(url, headers=HEADERS)
+            data = response.json()
+
+            print(f"Total keywords: {data['total']}")
+            for platform, keywords in data['platforms'].items():
+                for keyword in keywords:
+                    print(f"  [{platform}] {keyword['keyword']}")
+        - lang: JavaScript
+          source: |
+            const API_URL = 'https://api.tooldata.io/v2';
+            const API_KEY = '<tu_api_key>';
+            const COLLECTION_ID = '<collectionId>';
+
+            const response = await fetch(
+              `${API_URL}/collections/${COLLECTION_ID}/keywords`,
+              {
+                headers: {
+                  'Content-type': 'application/json',
+                  'Authorization': `ApiKey ${API_KEY}`
+                }
+              }
+            );
+            const data = await response.json();
+            console.log(`Total keywords: ${data.total}`);
+            Object.entries(data.platforms).forEach(([platform, keywords]) =>
+              keywords.forEach(k => console.log(`  [${platform}] ${k.keyword}`))
+            );
+        - lang: PHP
+          source: |
+            define('API_URL', 'https://api.tooldata.io/v2');
+            define('API_KEY', '<tu_api_key>');
+
+            $collectionId = '<collectionId>';
+            $header = [
+                'Content-type: application/json',
+                'Authorization: ApiKey ' . API_KEY
+            ];
+
+            $curl = curl_init();
+            $url = sprintf("%s/collections/%s/keywords", API_URL, $collectionId);
+
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
+            $result = curl_exec($curl);
+            curl_close($curl);
+
+            $data = json_decode($result, true);
+            echo "Total keywords: " . $data['total'] . "\n";
+
 components:
   schemas:
     Collection:
@@ -606,19 +808,20 @@ components:
           example: 'https://pbs.twimg.com/profile_images/example.jpg'
         followers:
           type: integer
-          description: Cantidad de seguidores
+          description: |
+            Cantidad de seguidores. Se omite en los medios digitales (`news`) y cuando la plataforma no lo informa.
           example: 283852
         location:
           type: string
-          description: Lugar declarado por el usuario
+          description: Lugar declarado por el usuario. Se omite si no está disponible.
           example: Santiago, Chile
         gender:
           type: string
-          description: Género detectado del usuario
+          description: Género detectado del usuario. `other` también cuando no se detectó.
           enum:
             - female
             - male
-            - business
+            - corporate
             - other
           example: other
 
@@ -628,6 +831,8 @@ components:
         Publicación capturada de una plataforma digital.
         Dependiendo del valor de `type_post`, puede incluir campos adicionales
         específicos de cada plataforma (ver tabla en la sección Plataformas soportadas).
+        `tags` y los arrays de entidades (`phrases`, `organizations`, `persons`, `locations`,
+        `commercial_items`, `events`, `dates`) se omiten cuando la publicación no los tiene.
       properties:
         id:
           type: string
@@ -650,10 +855,6 @@ components:
           type: string
           description: URL a la publicación original
           example: 'https://twitter.com/usuario/status/1995280867606843661'
-        image:
-          type: string
-          description: URL de la imagen o vista previa
-          example: 'https://pbs.twimg.com/media/example.jpg'
         type_post:
           type: string
           description: Plataforma de origen
@@ -665,16 +866,16 @@ components:
             - facebook_comment
             - news
             - tiktok
-            - tiktok_comment
             - linkedin
             - linkedin_comment
             - youtube
-            - youtube_comment
             - spotify
           example: twitter
         sentiment:
           type: string
-          description: Sentimiento detectado
+          description: |
+            Sentimiento detectado. Las publicaciones mixtas se devuelven como `neutral`.
+            Se omite si la publicación no tiene análisis de sentimiento.
           enum:
             - positive
             - neutral
@@ -682,15 +883,16 @@ components:
           example: positive
         engagement:
           type: number
-          description: Tasa de engagement (interacciones / seguidores)
+          description: |
+            Tasa de engagement (interacciones / seguidores). Se omite en los medios digitales (`news`).
           example: 0.003
         score:
           type: number
-          description: Puntuación de impacto basada en interacciones y alcance
+          description: Puntuación de impacto basada en interacciones y alcance. `0` si no está disponible.
           example: 1205.52
         location:
           type: string
-          description: Ubicación geográfica asociada a la publicación
+          description: Ubicación geográfica asociada a la publicación. Se omite si no está disponible.
           example: Santiago, Chile
         user:
           $ref: '#/components/schemas/User'
@@ -755,15 +957,15 @@ components:
             - '2013'
         title:
           type: string
-          description: Titular (solo en news y facebook)
+          description: Titular (news; en facebook y facebook_comment cuando existe)
           example: San Felipe supera su meta de la Teletón
         replies:
           type: integer
-          description: Cantidad de respuestas/comentarios (twitter, instagram, facebook, tiktok, linkedin, linkedin_comment, youtube)
+          description: Cantidad de respuestas/comentarios (twitter, instagram, facebook, facebook_comment, tiktok, linkedin, linkedin_comment, youtube)
           example: 14
         shares:
           type: integer
-          description: Veces compartida (twitter, facebook, tiktok, linkedin, linkedin_comment)
+          description: Veces compartida (twitter, facebook, facebook_comment)
           example: 20
         quotes:
           type: integer
@@ -771,7 +973,7 @@ components:
           example: 3
         views:
           type: integer
-          description: Visualizaciones/reproducciones (twitter, tiktok, linkedin, linkedin_comment, youtube, spotify)
+          description: Visualizaciones/reproducciones (tiktok, youtube)
           example: 5200
 
     Word:
@@ -825,6 +1027,103 @@ components:
           type: integer
           description: Total de publicaciones analizadas
           example: 5419
+
+    Keyword:
+      type: object
+      description: |
+        Término de búsqueda. Los campos disponibles dependen de la plataforma; `keyword` está siempre presente.
+      required:
+        - keyword
+      properties:
+        keyword:
+          type: string
+          description: Texto de la keyword tal como se monitorea
+          example: banco de chile
+        active:
+          type: boolean
+          description: Si la keyword está activa (twitter, instagram y facebook)
+          example: true
+        language:
+          type: string
+          nullable: true
+          description: Código ISO de idioma de 2 letras (solo twitter)
+          example: es
+        city:
+          type: string
+          nullable: true
+          description: Ciudad asociada a la búsqueda (solo twitter)
+          example: Santiago
+        retweets:
+          type: boolean
+          description: Si se incluyen retweets (solo twitter)
+          example: false
+        realtime:
+          type: boolean
+          description: Si la keyword se captura en tiempo real (solo twitter)
+          example: true
+        location:
+          type: string
+          nullable: true
+          description: Ubicación asociada a la búsqueda (solo facebook)
+          example: Chile
+        recommended:
+          type: boolean
+          description: Si la keyword es recomendada (solo tiktok)
+          example: false
+        country:
+          type: string
+          nullable: true
+          description: Código ISO del país (solo news)
+          example: CL
+
+    KeywordsResponse:
+      type: object
+      description: Keywords de una colección agrupadas por plataforma
+      properties:
+        collection:
+          type: string
+          description: ID de la colección
+          example: 1c8ef41de1744e5bb00d198b727555e7
+        platforms:
+          type: object
+          description: Keywords por plataforma. Incluye siempre las 8 claves; sin keywords, el array está vacío.
+          properties:
+            twitter:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+            instagram:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+            facebook:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+            tiktok:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+            news:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+            linkedin:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+            youtube:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+            spotify:
+              type: array
+              items:
+                $ref: '#/components/schemas/Keyword'
+        total:
+          type: integer
+          description: Número total de keywords en todas las plataformas
+          example: 4
 
   securitySchemes:
     ApiKey:
