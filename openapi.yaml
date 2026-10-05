@@ -116,7 +116,7 @@ info:
     | Instagram | `instagram`, `instagram_comment` | `replies` (solo `instagram`) |
     | Facebook | `facebook`, `facebook_comment` | `title`, `replies`, `shares` |
     | Medios digitales | `news` | `title` |
-    | TikTok | `tiktok` | `replies`, `views` |
+    | TikTok | `tiktok`, `tiktok_comment` | `replies`, `views` (solo `tiktok`) |
     | LinkedIn | `linkedin`, `linkedin_comment` | `replies` |
     | YouTube | `youtube` | `replies`, `views` |
     | Spotify | `spotify` | — |
@@ -866,6 +866,7 @@ components:
             - facebook_comment
             - news
             - tiktok
+            - tiktok_comment
             - linkedin
             - linkedin_comment
             - youtube
@@ -961,7 +962,7 @@ components:
           example: San Felipe supera su meta de la Teletón
         replies:
           type: integer
-          description: Cantidad de respuestas/comentarios (twitter, instagram, facebook, facebook_comment, tiktok, linkedin, linkedin_comment, youtube)
+          description: Cantidad de respuestas/comentarios (twitter, instagram, facebook, facebook_comment, tiktok, tiktok_comment, linkedin, linkedin_comment, youtube)
           example: 14
         shares:
           type: integer
